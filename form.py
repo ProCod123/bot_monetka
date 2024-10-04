@@ -616,7 +616,7 @@ def ask_traffic(message):
     markup.add(types.KeyboardButton("Автомобильный трафик"))
     markup.add(types.KeyboardButton("Пропустить"), types.KeyboardButton("Назад"))
     bot.send_message(
-        message.chat.id, "8. Основная ориентированность на:", reply_markup=markup
+        message.chat.id, "9. Основная ориентированность на:", reply_markup=markup
     )
     bot.register_next_step_handler(message, process_traffic)
 
@@ -721,7 +721,7 @@ def processobjecttype(message):
         ask_basement_use(message) 
         return 
     elif message.text == "Назад": 
-        if "типобъекта" in formdata: 
+        if "типобъекта" in form_data: 
             del form_data["типобъекта"]
             ask_building_floors(message) 
         return 
@@ -737,7 +737,7 @@ def ask_basement_use(message):
     markup.add(types.KeyboardButton("Пропустить"), types.KeyboardButton("Назад"))
     bot.send_message(
         message.chat.id,
-        "8. Предполагается использование подвальных помещений:",
+        "11. Предполагается использование подвальных помещений:",
         reply_markup=markup,
     )
     bot.register_next_step_handler(message, process_basement_use)
@@ -787,7 +787,7 @@ def ask_plan_match(message):
     markup.add(types.KeyboardButton("Пропустить"), types.KeyboardButton("Назад"))
     bot.send_message(
         message.chat.id,
-        "9. Фактическая планировка соответствует техпаспорту:",
+        "12. Фактическая планировка соответствует техпаспорту:",
         reply_markup=markup,
     )
     bot.register_next_step_handler(message, process_plan_match)
@@ -836,7 +836,7 @@ def process_comment_7(message):
 def ask_foundation(message):
     bot.send_message(
         message.chat.id,
-        "14. Фундамент:",
+        "13. Тип фундамента:",
         reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
     )
     bot.register_next_step_handler(message, process_foundation)
@@ -859,7 +859,7 @@ def process_foundation(message):
 def ask_floors(message):
     bot.send_message(
         message.chat.id,
-        "Полы:",
+        "Тип полов:",
         reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
     )
     bot.register_next_step_handler(message, process_floors)
@@ -1047,7 +1047,7 @@ def process_roof_type(message):
 def ask_structure_scheme(message):
     bot.send_message(
         message.chat.id,
-        "30. Конструктивная схема здания:",
+        "Конструктивная схема здания:",
         reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
     )
     bot.register_next_step_handler(message, process_structure_scheme)
@@ -1070,7 +1070,7 @@ def process_structure_scheme(message):
 def ask_defects(message):
     bot.send_message(
         message.chat.id,
-        "31. Дефекты несущих конструкций:",
+        "Дефекты несущих конструкций:",
         reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
     )
     bot.register_next_step_handler(message, process_defects)
@@ -1097,7 +1097,7 @@ def ask_opening_in_wall(message):
     markup.add(types.KeyboardButton("Пропустить"), types.KeyboardButton("Назад"))
     bot.send_message(
         message.chat.id,
-        "15. На планируемом объекте потребуется устройство проема в несущей стене:",
+        "14. На планируемом объекте потребуется устройство проема в несущей стене:",
         reply_markup=markup,
     )
     bot.register_next_step_handler(message, process_opening_in_wall)
@@ -1124,7 +1124,7 @@ def ask_replacement_elements(message):
     markup.add(types.KeyboardButton("Пропустить"), types.KeyboardButton("Назад"))
     bot.send_message(
         message.chat.id,
-        "16. Потребуется замена или дополнительная установка элементов несущих конструкций:",
+        "Потребуется замена или дополнительная установка элементов несущих конструкций:",
         reply_markup=markup,
     )
     bot.register_next_step_handler(message, process_replacement_elements)
@@ -1151,7 +1151,7 @@ def ask_reconstruction_area(message):
     markup.add(types.KeyboardButton("Пропустить"), types.KeyboardButton("Назад"))
     bot.send_message(
         message.chat.id,
-        " Площадь планируемой реконструкции более 1500м2:",
+        "Площадь планируемой реконструкции более 1500м2:",
         reply_markup=markup,
     )
     bot.register_next_step_handler(message, process_reconstruction_area)
@@ -1275,7 +1275,7 @@ def process_roof_reconstruction(message):
 def ask_construction_definition(message):
     bot.send_message(
         message.chat.id,
-        "35. Объект попадает под официальное определение типа строительства:",
+        "Объект попадает под официальное определение типа строительства:",
         reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
     )
     bot.register_next_step_handler(message, process_construction_definition)
@@ -1302,7 +1302,7 @@ def ask_expertise(message):
     markup.add(types.KeyboardButton("Пропустить"), types.KeyboardButton("Назад"))
     bot.send_message(
         message.chat.id,
-        "36. Прохождение экспертизы проектной документации:",
+        "15. Прохождение экспертизы проектной документации:",
         reply_markup=markup,
     )
     bot.register_next_step_handler(message, process_expertise)
@@ -1325,7 +1325,7 @@ def process_expertise(message):
 def ask_requirements(message):
     bot.send_message(
         message.chat.id,
-        "37. Предложение для рассмотрения комиссией требований по отклонению, дополнению, уточнению к действующему стандарту на строительство и оснащение магазинов ТС Монетка, применительно к данному объекту:",
+        "16. Предложение для рассмотрения комиссией требований по отклонению, дополнению, уточнению к действующему стандарту на строительство и оснащение магазинов ТС Монетка, применительно к данному объекту:",
         reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
     )
     bot.register_next_step_handler(message, process_requirements)
