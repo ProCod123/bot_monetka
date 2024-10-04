@@ -24,9 +24,7 @@ def get_task(filename, sheet_name='ЗАПУСК', apo_status_col=154, adress_col
 
   return output
 
-t = get_task(file_zapusk)
-region = t.get('Соколов')[1].split(' ')[1]
-print(region)
+
 
 def get_id(name):
     df = pd.read_excel(file_zapusk, sheet_name='Телеграм', nrows=30)

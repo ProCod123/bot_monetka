@@ -39,6 +39,7 @@ def start(message):
 @bot.callback_query_handler(func=lambda call: True)
 def handle_button_press(call):
     print(call.data)
+    print(call.message.text)
     global adr, region, objects_path, keyboard_folder
     folder = None
     
@@ -124,102 +125,18 @@ def handle_photo(message):
     bot.send_message(message.chat.id, "Хотите загрузить еще фото?", reply_markup=keyboard_foto)
 
 
-
-
-# 1. Председатель 
+# 1. Владелец 
 def start_form(message):
     form_data.clear()  # Очищаем данные формы перед началом
     # Добавляем филиал в словарь
     form_data["филиал"] = region
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-    for item in DF:
-        markup.add(types.KeyboardButton(item))
-    markup.add(types.KeyboardButton("Пропустить"), types.KeyboardButton("Назад"))
-    bot.send_message(
-        message.chat.id, "Заполните, пожалуйста, форму:\n\n1. Председатель комиссии:", reply_markup=markup
-    )
-    bot.register_next_step_handler(message, process_chairman)
-
-# Функция для обработки 1. Председатель 
-def process_chairman(message):
-    if message.text == "Пропустить":
-        form_data["председатель"] = "Пропущено"
-        ask_members(message)
-        return
-    elif message.text == "Назад":
-        if "право_владения" in form_data:
-            del form_data["председатель"]
-        start_form(message)
-        return
-    form_data["председатель"] = message.text
-    ask_members(message)
-
-# 2. О членах комиссии
-def ask_members(message):
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-    for item in RP:
-        markup.add(types.KeyboardButton(item))
-    markup.add(types.KeyboardButton("Пропустить"), types.KeyboardButton("Назад"))
-    bot.send_message(
-        message.chat.id, "2. Выберите первого члена комиссии (РП):", reply_markup=markup
-    )
-    bot.register_next_step_handler(message, process_members)
-
-# Функция для обработки ответа на вопрос о членах комиссии
-def process_members(message):
-    if message.text == "Пропустить":
-        form_data["члены_комиссии"] = ["Пропущено"] * 2  
-        ask_owner(message)
-        return
-    elif message.text == "Назад":
-        if "члены_комиссии" in form_data:
-            del form_data["члены_комиссии"]
-        start_form(message)
-        return
-    if "члены_комиссии" not in form_data:
-        form_data["члены_комиссии"] = []
-    form_data["члены_комиссии"].append(message.text)
-    if len(form_data["члены_комиссии"]) < 2:
-        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-        for i in ROR:
-            markup.add(types.KeyboardButton(i))
-        markup.add(types.KeyboardButton("Пропустить"), types.KeyboardButton("Назад"))
-        bot.send_message(message.chat.id, "2. Выберите второго члена комиссии (РОР):", reply_markup=markup)
-        bot.register_next_step_handler(message, process_members)
-    else:
-        comission_state(message)
-
-
-
-def comission_state(message):
     bot.send_message(
         message.chat.id,
-        "3. Комиссией установлено:",
-        reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
-    )
-    bot.register_next_step_handler(message, process_comission_state)
-
-# 3. Комиссией установлено
-def process_comission_state(message):
-    if message.text == "Пропустить":
-        form_data["комиссией_установлено"] = "Пропущено"
-        ask_owner(message)
-        return
-    elif message.text == "Назад":
-        if "владелец" in form_data:
-            del form_data["комиссией_установлено"]
-        ask_members(message)
-        return
-    form_data["комиссией_установлено"] = message.text
-    ask_owner(message)
-
-def ask_owner(message):
-    bot.send_message(
-        message.chat.id,
-        "4. Владелец объекта:",
+        "1. Владелец объекта:",
         reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
     )
     bot.register_next_step_handler(message, process_owner)
+
 
 # Функция для обработки ответа на вопрос о владельце
 def process_owner(message):
@@ -230,7 +147,7 @@ def process_owner(message):
     elif message.text == "Назад":
         if "владелец" in form_data:
             del form_data["владелец"]
-        comission_state(message)
+        start_form(message)
         return
     form_data["владелец"] = message.text
     ask_owner_information(message)
@@ -252,24 +169,24 @@ def process_owner_information(message):
         ask_user(message)
         return
     elif message.text == "Назад":
-        if "владелец" in form_data:
+        if "контакты_владельца" in form_data:
             del form_data["контакты_владельца"]
-        ask_owner(message)
+        start_form(message)
         return
     form_data["контакты_владельца"] = message.text
     ask_user(message)
 
 
-# 5.  о пользователе/арендаторе
+# 2.  о пользователе/арендаторе
 def ask_user(message):
     bot.send_message(
         message.chat.id,
-        "5. Пользователь, арендатор объекта:",
+        "2. Пользователь, арендатор объекта:",
         reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
     )
     bot.register_next_step_handler(message, process_user)
 
-# 5. пользователе/арендаторе
+# 2. пользователе/арендаторе
 def process_user(message):
     if message.text == "Пропустить":
         form_data["пользователь"] = "Пропущено"
@@ -278,7 +195,7 @@ def process_user(message):
     elif message.text == "Назад":
         if "пользователь" in form_data:
             del form_data["пользователь"]
-        ask_owner(message)
+        ask_owner_information(message)
         return
     form_data["пользователь"] = message.text
     ask_user_info(message)
@@ -308,13 +225,11 @@ def process_user_info(message):
     ask_function(message)
 
 
-
-
 # Функция для отправки вопроса о функциональном назначении здания
 def ask_function(message):
     bot.send_message(
         message.chat.id,
-        "6. Функциональное назначение здания по документам:",
+        "3. Функциональное назначение здания по документам:",
         reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
     )
     bot.register_next_step_handler(message, process_function)
@@ -341,7 +256,7 @@ def ask_ownership_type(message):
     markup.add(types.KeyboardButton("Купли-продажи"))
     markup.add(types.KeyboardButton("Пропустить"), types.KeyboardButton("Назад"))
     bot.send_message(
-        message.chat.id, "7. Право владения объектом, планируется по Договору:", reply_markup=markup
+        message.chat.id, "4. Право владения объектом, планируется по Договору:", reply_markup=markup
     )
     bot.register_next_step_handler(message, process_ownership_type)
 
@@ -390,7 +305,7 @@ def ask_property_status(message):
     markup.add(types.KeyboardButton("Государственная собственность"))
     markup.add(types.KeyboardButton("Пропустить"), types.KeyboardButton("Назад"))
     bot.send_message(
-        message.chat.id, "9. Планируемый объект является:", reply_markup=markup
+        message.chat.id, "5. Планируемый объект является:", reply_markup=markup
     )
     bot.register_next_step_handler(message, process_property_status)
 
@@ -432,7 +347,6 @@ def process_comments_2(message):
     ask_building_monument(message)
 
 
-
 # Функция для отправки вопроса о статусе здания (памятник архитектуры)
 def ask_building_monument(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
@@ -441,7 +355,7 @@ def ask_building_monument(message):
     markup.add(types.KeyboardButton("Пропустить"), types.KeyboardButton("Назад"))
     bot.send_message(
         message.chat.id,
-        "10. Здание, в котором расположен планируемый объект, по документам является памятником архитектуры:",
+        "6. Здание, в котором расположен планируемый объект, по документам является памятником архитектуры:",
         reply_markup=markup,
     )
     bot.register_next_step_handler(message, process_building_monument)
@@ -549,7 +463,7 @@ def ask_room_basement(message):
     markup.add(types.KeyboardButton("Пропустить"), types.KeyboardButton("Назад"))
     bot.send_message(
         message.chat.id,
-        "11. Планируемое помещение (объект), по документам является цокольным этажом:",
+        "7. Планируемое помещение (объект), по документам является цокольным этажом:",
         reply_markup=markup,
     )
     bot.register_next_step_handler(message, process_room_basement)
@@ -624,12 +538,12 @@ def process_comments_4(message):
 def ask_basement_use(message):
     bot.send_message(
         message.chat.id,
-        "12. Планируется использование подвальных помещений (если да, под какие цели (подсобки, ЦХМ и т.д.)):",
+        "8. Планируется использование подвальных помещений (если да, под какие цели (подсобки, ЦХМ и т.д.)):",
         reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
     )
     bot.register_next_step_handler(message, process_basement_use)
 
-# 15 Функция для обработки ответа на вопрос об использовании подвальных помещений
+#  Функция для обработки ответа на вопрос об использовании подвальных помещений
 def process_basement_use(message):
     if message.text == "Пропустить":
         form_data["подвальные_помещения"] = "Пропущено"
@@ -651,7 +565,7 @@ def ask_basement_document(message):
     markup.add(types.KeyboardButton("Пропустить"), types.KeyboardButton("Назад"))
     bot.send_message(
         message.chat.id,
-        "13. В случае использования подвальных помещений по Договору аренды будут оформлены:",
+        "В случае использования подвальных помещений по Договору аренды будут оформлены:",
         reply_markup=markup,
     )
     bot.register_next_step_handler(message, process_basement_document)
@@ -702,7 +616,7 @@ def ask_traffic(message):
     markup.add(types.KeyboardButton("Автомобильный трафик"))
     markup.add(types.KeyboardButton("Пропустить"), types.KeyboardButton("Назад"))
     bot.send_message(
-        message.chat.id, "14. Основная ориентированность на:", reply_markup=markup
+        message.chat.id, "8. Основная ориентированность на:", reply_markup=markup
     )
     bot.register_next_step_handler(message, process_traffic)
 
@@ -724,7 +638,7 @@ def process_traffic(message):
 def ask_area(message):
     bot.send_message(
         message.chat.id,
-        "18. Площадь помещения, планируемая в аренду/покупку:",
+        "9. Площадь помещения, планируемая в аренду/покупку:",
         reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
     )
     bot.register_next_step_handler(message, process_area)
@@ -732,22 +646,22 @@ def ask_area(message):
 # Функция для обработки ответа на вопрос о площади помещения
 def process_area(message):
     if message.text == "Пропустить":
-        form_data["площадь"] = "Пропущено"
+        form_data["площадь_помещения"] = "Пропущено"
         ask_floor(message)
         return
     elif message.text == "Назад":
-        if "площадь" in form_data:
-            del form_data["площадь"]
+        if "площадь_помещения" in form_data:
+            del form_data["площадь_помещения"]
         ask_traffic(message)
         return
-    form_data["площадь"] = message.text
+    form_data["площадь_помещения"] = message.text
     ask_floor(message)
 
 # Функция для отправки вопроса об этаже
 def ask_floor(message):
     bot.send_message(
         message.chat.id,
-        "15. Расположено на этаже:",
+        "10. Расположено на этаже:",
         reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
     )
     bot.register_next_step_handler(message, process_floor)
@@ -797,7 +711,7 @@ def askobjecttype(message):
     markup.add(types.KeyboardButton("Цоколь/подвал. Этаж")) 
     markup.add(types.KeyboardButton("Иные объекты")) 
     markup.add(types.KeyboardButton("Пропустить"), types.KeyboardButton("Назад")) 
-    bot.send_message(message.chat.id, "16. Тип объекта:", reply_markup=markup) 
+    bot.send_message(message.chat.id, "11. Тип объекта:", reply_markup=markup) 
     bot.register_next_step_handler(message, processobjecttype)
 
  
@@ -823,7 +737,7 @@ def ask_basement_use(message):
     markup.add(types.KeyboardButton("Пропустить"), types.KeyboardButton("Назад"))
     bot.send_message(
         message.chat.id,
-        "22. Предполагается использование подвальных помещений:",
+        "8. Предполагается использование подвальных помещений:",
         reply_markup=markup,
     )
     bot.register_next_step_handler(message, process_basement_use)
@@ -846,7 +760,7 @@ def process_basement_use(message):
 def ask_comment_6(message):
     bot.send_message(
         message.chat.id,
-        "23. Комментарий:",
+        "Комментарий:",
         reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
     )
     bot.register_next_step_handler(message, process_comment_6)
@@ -873,7 +787,7 @@ def ask_plan_match(message):
     markup.add(types.KeyboardButton("Пропустить"), types.KeyboardButton("Назад"))
     bot.send_message(
         message.chat.id,
-        "17. Фактическая планировка соответствует техпаспорту:",
+        "9. Фактическая планировка соответствует техпаспорту:",
         reply_markup=markup,
     )
     bot.register_next_step_handler(message, process_plan_match)
@@ -907,45 +821,22 @@ def ask_comment_7(message):
 def process_comment_7(message):
     if message.text == "Пропустить":
         form_data["комментарий_7"] = "Пропущено"
-        ask_structure_material(message)
+        ask_foundation(message)
         return
     elif message.text == "Назад":
-        if "комментарий_2" in form_data:
+        if "комментарий_7" in form_data:
             del form_data["комментарий_7"]
         ask_plan_match(message)
         return
     form_data["комментарий_7"] = message.text
-    ask_structure_material(message)
-
-
-# Функция для отправки вопроса о типе и материале конструкций
-def ask_structure_material(message):
-    bot.send_message(
-        message.chat.id,
-        "18. Тип и материал по результатам визуального обследования несущих конструкций:",
-        reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
-    )
-    bot.register_next_step_handler(message, process_structure_material)
-
-# Функция для обработки ответа о типе и материале конструкций
-def process_structure_material(message):
-    if message.text == "Пропустить":
-        form_data["тип_конструкций"] = "Пропущено"
-        ask_foundation(message)
-        return
-    elif message.text == "Назад":
-        if "тип_конструкций" in form_data:
-            del form_data["тип_конструкций"]
-        ask_plan_match_3(message)
-        return
-    form_data["тип_конструкций"] = message.text
     ask_foundation(message)
+
 
 # Функция для отправки вопроса о фундаменте
 def ask_foundation(message):
     bot.send_message(
         message.chat.id,
-        "27. Фундамент:",
+        "14. Фундамент:",
         reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
     )
     bot.register_next_step_handler(message, process_foundation)
@@ -959,7 +850,7 @@ def process_foundation(message):
     elif message.text == "Назад":
         if "фундамент" in form_data:
             del form_data["фундамент"]
-        ask_structure_material(message)
+        process_comment_7(message)
         return
     form_data["фундамент"] = message.text
     ask_floors(message)
@@ -968,7 +859,7 @@ def process_foundation(message):
 def ask_floors(message):
     bot.send_message(
         message.chat.id,
-        "28. Полы:",
+        "Полы:",
         reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
     )
     bot.register_next_step_handler(message, process_floors)
@@ -991,16 +882,17 @@ def process_floors(message):
 def ask_load(message):
     bot.send_message(
         message.chat.id,
-        "29. Расчетная нагрузка на квадратный метр:",
+        "Расчетная нагрузка на квадратный метр:",
         reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
     )
     bot.register_next_step_handler(message, process_load)
+
 
 # Функция для обработки ответа о расчетной нагрузке
 def process_load(message):
     if message.text == "Пропустить":
         form_data["нагрузка"] = "Пропущено"
-        ask_structure_scheme(message)
+        ask_bearing_walls(message)
         return
     elif message.text == "Назад":
         if "нагрузка" in form_data:
@@ -1008,7 +900,148 @@ def process_load(message):
         ask_floors(message)
         return
     form_data["нагрузка"] = message.text
+    ask_bearing_walls(message)
+
+
+# Функция для отправки вопроса о несущих стенах
+def ask_bearing_walls(message):
+    bot.send_message(
+        message.chat.id,
+        "Несущие стены:",
+        reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
+    )
+    bot.register_next_step_handler(message, process_bearing_walls)
+
+# Функция для обработки ответа о несущих стенах
+def process_bearing_walls(message):
+    if message.text == "Пропустить":
+        form_data["стены"] = "Пропущено"
+        ask_ceiling_type(message)
+        return
+    elif message.text == "Назад":
+        if "стены" in form_data:
+            del form_data["стены"]
+        # Вернуться к предыдущему вопросу
+        return
+    form_data["стены"] = message.text
+    ask_ceiling_type(message)
+
+# Функция для отправки вопроса о типе перекрытия потолка
+def ask_ceiling_type(message):
+    bot.send_message(
+        message.chat.id,
+        "Тип перекрытия потолка:",
+        reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
+    )
+    bot.register_next_step_handler(message, process_ceiling_type)
+
+# Функция для обработки ответа о типе перекрытия потолка
+def process_ceiling_type(message):
+    if message.text == "Пропустить":
+        form_data["тип_потолка"] = "Пропущено"
+        ask_ceiling_material(message)
+        return
+    elif message.text == "Назад":
+        if "тип_потолка" in form_data:
+            del form_data["тип_потолка"]
+        ask_bearing_walls(message)
+        return
+    form_data["тип_потолка"] = message.text
+    ask_ceiling_material(message)
+
+# Функция для отправки вопроса о материале перекрытия потолка
+def ask_ceiling_material(message):
+    bot.send_message(
+        message.chat.id,
+        "Материал перекрытия потолка:",
+        reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
+    )
+    bot.register_next_step_handler(message, process_ceiling_material)
+
+# Функция для обработки ответа о материале перекрытия потолка
+def process_ceiling_material(message):
+    if message.text == "Пропустить":
+        form_data["материал_потолка"] = "Пропущено"
+        ask_floor_type(message)
+        return
+    elif message.text == "Назад":
+        if "материал_потолка" in form_data:
+            del form_data["материал_потолка"]
+        ask_ceiling_type(message)
+        return
+    form_data["материал_потолка"] = message.text
+    ask_floor_type(message)
+
+# Функция для отправки вопроса о типе перекрытия пола
+def ask_floor_type(message):
+    bot.send_message(
+        message.chat.id,
+        "Тип перекрытия пола:",
+        reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
+    )
+    bot.register_next_step_handler(message, process_floor_type)
+
+# Функция для обработки ответа о типе перекрытия пола
+def process_floor_type(message):
+    if message.text == "Пропустить":
+        form_data["тип_пола"] = "Пропущено"
+        ask_floor_material(message)
+        return
+    elif message.text == "Назад":
+        if "тип_пола" in form_data:
+            del form_data["тип_пола"]
+        ask_ceiling_material(message)
+        return
+    form_data["тип_пола"] = message.text
+    ask_floor_material(message)
+
+# Функция для отправки вопроса о материале перекрытия пола
+def ask_floor_material(message):
+    bot.send_message(
+        message.chat.id,
+        "Материал перекрытия пола:",
+        reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
+    )
+    bot.register_next_step_handler(message, process_floor_material)
+
+# Функция для обработки ответа о материале перекрытия пола
+def process_floor_material(message):
+    if message.text == "Пропустить":
+        form_data["материал_пола"] = "Пропущено"
+        ask_roof_type(message)
+        return
+    elif message.text == "Назад":
+        if "материал_пола" in form_data:
+            del form_data["материал_пола"]
+        ask_floor_type(message)
+        return
+    form_data["материал_пола"] = message.text
+    ask_roof_type(message)
+
+# Функция для отправки вопроса о типе кровли
+def ask_roof_type(message):
+    bot.send_message(
+        message.chat.id,
+        "Кровля:",
+        reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
+    )
+    bot.register_next_step_handler(message, process_roof_type)
+
+# Функция для обработки ответа о типе кровли
+def process_roof_type(message):
+    if message.text == "Пропустить":
+        form_data["кровля"] = "Пропущено"
+        ask_structure_scheme(message)
+        return
+    elif message.text == "Назад":
+        if "кровля" in form_data:
+            del form_data["кровля"]
+        ask_floor_material(message)
+        return
+    form_data["кровля"] = message.text
     ask_structure_scheme(message)
+
+
 
 # Функция для отправки вопроса о конструктивной схеме здания
 def ask_structure_scheme(message):
@@ -1028,7 +1061,7 @@ def process_structure_scheme(message):
     elif message.text == "Назад":
         if "конструктивная_схема" in form_data:
             del form_data["конструктивная_схема"]
-        ask_load(message)
+        ask_roof_type(message)
         return
     form_data["конструктивная_схема"] = message.text
     ask_defects(message)
@@ -1064,7 +1097,7 @@ def ask_opening_in_wall(message):
     markup.add(types.KeyboardButton("Пропустить"), types.KeyboardButton("Назад"))
     bot.send_message(
         message.chat.id,
-        "32. На планируемом объекте потребуется устройство проема в несущей стене:",
+        "15. На планируемом объекте потребуется устройство проема в несущей стене:",
         reply_markup=markup,
     )
     bot.register_next_step_handler(message, process_opening_in_wall)
@@ -1091,7 +1124,7 @@ def ask_replacement_elements(message):
     markup.add(types.KeyboardButton("Пропустить"), types.KeyboardButton("Назад"))
     bot.send_message(
         message.chat.id,
-        "33. Потребуется замена или дополнительная установка элементов несущих конструкций:",
+        "16. Потребуется замена или дополнительная установка элементов несущих конструкций:",
         reply_markup=markup,
     )
     bot.register_next_step_handler(message, process_replacement_elements)
@@ -1118,7 +1151,7 @@ def ask_reconstruction_area(message):
     markup.add(types.KeyboardButton("Пропустить"), types.KeyboardButton("Назад"))
     bot.send_message(
         message.chat.id,
-        "34. Площадь планируемой реконструкции более 1500м2:",
+        " Площадь планируемой реконструкции более 1500м2:",
         reply_markup=markup,
     )
     bot.register_next_step_handler(message, process_reconstruction_area)
@@ -1127,7 +1160,7 @@ def ask_reconstruction_area(message):
 def process_reconstruction_area(message):
     if message.text == "Пропустить":
         form_data["площадь_реконструкции"] = "Пропущено"
-        ask_construction_definition(message)
+        ask_extension(message)
         return
     elif message.text == "Назад":
         if "площадь_реконструкции" in form_data:
@@ -1135,7 +1168,108 @@ def process_reconstruction_area(message):
         ask_replacement_elements(message)
         return
     form_data["площадь_реконструкции"] = message.text
+    ask_extension(message)
+
+# Функция для создания клавиатуры с вариантами Да, Нет, Пропустить, Назад
+def create_yes_no_skip_back_keyboard():
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    markup.row(types.KeyboardButton("Да"), types.KeyboardButton("Нет"))
+    markup.row(types.KeyboardButton("Пропустить"), types.KeyboardButton("Назад"))
+    return markup
+
+
+# Функция для отправки вопроса о строительстве теплого пристроя
+def ask_extension(message):
+    bot.send_message(
+        message.chat.id,
+        "Будет ли при переустройстве помещения увеличение объема здания за счет строительства теплого пристроя?",
+        reply_markup=create_yes_no_skip_back_keyboard(),
+    )
+    bot.register_next_step_handler(message, process_extension)
+
+# Функция для обработки ответа о строительстве теплого пристроя
+def process_extension(message):
+    if message.text == "Пропустить":
+        form_data["пристройка"] = "Пропущено"
+        ask_ceiling_height(message)
+        return
+    elif message.text == "Назад":
+        if "пристройка" in form_data:
+            del form_data["пристройка"]
+        ask_reconstruction_area(message)
+        return
+    form_data["пристройка"] = message.text
+    ask_ceiling_height(message)
+
+# Функция для отправки вопроса о увеличении высоты потолков
+def ask_ceiling_height(message):
+    bot.send_message(
+        message.chat.id,
+        "Увеличение объема здания за счет увеличения высоты потолков за счет выемки грунта?",
+        reply_markup=create_yes_no_skip_back_keyboard(),
+    )
+    bot.register_next_step_handler(message, process_ceiling_height)
+
+# Функция для обработки ответа о увеличении высоты потолков
+def process_ceiling_height(message):
+    if message.text == "Пропустить":
+        form_data["потолки"] = "Пропущено"
+        ask_floor_reconstruction(message)
+        return
+    elif message.text == "Назад":
+        if "потолки" in form_data:
+            del form_data["потолки"]
+        ask_extension(message)
+        return
+    form_data["потолки"] = message.text
+    ask_floor_reconstruction(message)
+
+# Функция для отправки вопроса о переустройстве полов
+def ask_floor_reconstruction(message):
+    bot.send_message(
+        message.chat.id,
+        "Увеличение объема здания за счет переустройства полов?",
+        reply_markup=create_yes_no_skip_back_keyboard(),
+    )
+    bot.register_next_step_handler(message, process_floor_reconstruction)
+
+# Функция для обработки ответа о переустройстве полов
+def process_floor_reconstruction(message):
+    if message.text == "Пропустить":
+        form_data["полы_объем"] = "Пропущено"
+        ask_roof_reconstruction(message)
+        return
+    elif message.text == "Назад":
+        if "полы_объем" in form_data:
+            del form_data["полы_объем"]
+        ask_ceiling_height(message)
+        return
+    form_data["полы_объем"] = message.text
+    ask_roof_reconstruction(message)
+
+# Функция для отправки вопроса о переустройстве кровли
+def ask_roof_reconstruction(message):
+    bot.send_message(
+        message.chat.id,
+        "Увеличение объема здания за счет переустройства кровли?",
+        reply_markup=create_yes_no_skip_back_keyboard(),
+    )
+    bot.register_next_step_handler(message, process_roof_reconstruction)
+
+# Функция для обработки ответа о переустройстве кровли
+def process_roof_reconstruction(message):
+    if message.text == "Пропустить":
+        form_data["кровля_переустройство"] = "Пропущено"
+        ask_construction_definition(message)
+        return
+    elif message.text == "Назад":
+        if "кровля_переустройство" in form_data:
+            del form_data["кровля_переустройство"]
+        ask_floor_reconstruction(message)
+        return
+    form_data["кровля_переустройство"] = message.text
     ask_construction_definition(message)
+
 
 # Функция для отправки вопроса о типе строительства
 def ask_construction_definition(message):
@@ -1155,7 +1289,7 @@ def process_construction_definition(message):
     elif message.text == "Назад":
         if "тип_строительства" in form_data:
             del form_data["тип_строительства"]
-        ask_reconstruction_area(message)
+        ask_construction_definition(message)
         return
     form_data["тип_строительства"] = message.text
     ask_expertise(message)
@@ -1210,6 +1344,7 @@ def process_requirements(message):
     form_data["требования"] = message.text
     end_form(message)
 
+# Конец листа 3 ---------------------------------------------------------------
 
 # Функция для завершения формы
 def end_form(message):
