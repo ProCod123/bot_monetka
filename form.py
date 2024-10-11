@@ -1,7 +1,6 @@
 import telebot
 from telebot import types
 import os
-import time
 
 
 from log_data import log_data_to_file
@@ -10,16 +9,9 @@ from workers import DF, ROR, RP
 
 bot = telebot.TeleBot('5209749192:AAEyxtpL5ndVu8-cs77LgG_W878lqKGaT-I')
 
-keyboard_2 = telebot.types.InlineKeyboardMarkup()
-keyboard_2.row(
-    telebot.types.InlineKeyboardButton("Заполнить АПО", callback_data="begin_apo"),
-    telebot.types.InlineKeyboardButton("Загрузить фото", callback_data="load_photo"))
-keyboard_2.row(telebot.types.InlineKeyboardButton("Назад", callback_data="back"))
-
 
 
 form_data = {}
-
 
 
 @bot.message_handler(commands=['start'])
@@ -34,22 +26,22 @@ def start(message):
             keyboard.add(telebot.types.InlineKeyboardButton(adress.split(', ')[-1], callback_data=name + ',' + str(values.get(name).index(adress))))
         # Отправка приветственного сообщения с инлайн-клавиатурой
         bot.send_message(get_id(name), "Требуется предоставить АПО по объектам:", reply_markup=keyboard)
-        
+     
 
 @bot.callback_query_handler(func=lambda call: True)
 def handle_button_press(call):
     print(call.data)
-    print(call.message.text)
     global adr, region, objects_path, keyboard_folder
     folder = None
-    
+
     try:
-        if len(call.data.split(',')) > 1: 
+        if len(call.data.split(',')) > 1:
             name = call.data.split(',')[0]
             number = int(call.data.split(',')[1])
             adr = values.get(name)[number]
-            region = values.get('Соколов')[1].split(' ')[1]
-            bot.send_message(call.message.chat.id, f"Выберите действие по объекту: {adr}.", reply_markup=keyboard_2)
+            region = values.get(name)[number].split(' ')[number]
+            send_choice_message(call.message.chat.id)
+           
 
         if call.data == "begin_apo":
             # Функция для отправки первого вопроса
@@ -102,9 +94,10 @@ def handle_button_press(call):
             bot.send_message(call.message.chat.id, "Требуется предоставить АПО по объектам:", reply_markup=keyboard)
 
         if folder is not None:
-            objects_path = os.path.abspath("..\\" + os.curdir) + "\Объекты" + '\\' + adr + "\\Фото\\" + folder
+            objects_path = os.path.abspath("..\\" + os.curdir) + "\Объекты" + '\\' + adr + "\\Акты\\АПО\\Фото\\" + folder
             bot.send_message(call.message.chat.id, 'Отправьте фото! Путь к папке: ' + objects_path)
-    except Exception:
+    except Exception as e:
+        print(e)
         start(call.message)
 
 # Обработка отправленного фото
@@ -1353,7 +1346,7 @@ def end_form(message):
     for key, value in form_data.items():
         bot.send_message(message.chat.id, f"{key}: {value}")
     bot.send_message(message.chat.id, "ВАЖНО! Объект будет находиться в списке объектов по которым требуется АПО до тех пор пока в таблице запуск не будет снята отметка")
-    start(message)
+    send_choice_message(message.chat.id)
 
 
 # Функция для создания клавиатуры с кнопками "Пропустить" и "Назад"
@@ -1362,6 +1355,14 @@ def create_keyboard_with_skip_and_back(skip_text, back_text):
     markup.add(types.KeyboardButton(skip_text), types.KeyboardButton(back_text))
     return markup
 
+
+def send_choice_message(chat_id):
+    keyboard_2 = telebot.types.InlineKeyboardMarkup()
+    keyboard_2.row(
+        telebot.types.InlineKeyboardButton("Заполнить АПО", callback_data="begin_apo"),
+        telebot.types.InlineKeyboardButton("Загрузить фото", callback_data="load_photo"))
+    keyboard_2.row(telebot.types.InlineKeyboardButton("Назад", callback_data="back"))
+    bot.send_message(chat_id, f"Выберите действие по объекту: {adr}.", reply_markup=keyboard_2)
 
 bot.polling(none_stop=True)
 
