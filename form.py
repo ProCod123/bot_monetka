@@ -4,8 +4,8 @@ import os
 
 
 from log_data import log_data_to_file
-from work_with_exel import get_task, get_id, file_zapusk
-from workers import DF, ROR, RP
+from work_with_exel import get_task, get_id, file_zapusk, insert_data_to_excel
+from workers import DF, ROR, RP_MSK, RP_SPB
 
 bot = telebot.TeleBot('5209749192:AAEyxtpL5ndVu8-cs77LgG_W878lqKGaT-I')
 
@@ -31,7 +31,7 @@ def start(message):
 @bot.callback_query_handler(func=lambda call: True)
 def handle_button_press(call):
     print(call.data)
-    global adr, region, objects_path, keyboard_folder
+    global adr, region, objects_path, keyboard_folder, name, number
     folder = None
 
     try:
@@ -39,9 +39,9 @@ def handle_button_press(call):
             name = call.data.split(',')[0]
             number = int(call.data.split(',')[1])
             adr = values.get(name)[number]
-            region = values.get(name)[number].split(' ')[number]
+            region = values.get(name)[number].split(' ')[1]
             send_choice_message(call.message.chat.id)
-           
+
 
         if call.data == "begin_apo":
             # Функция для отправки первого вопроса
@@ -122,7 +122,18 @@ def handle_photo(message):
 def start_form(message):
     form_data.clear()  # Очищаем данные формы перед началом
     # Добавляем филиал в словарь
+    form_data["id"] = message.chat.id
     form_data["филиал"] = region
+    form_data["адрес"] = adr
+    form_data["рп"] = name
+
+    if region == "МСК":
+        form_data["председатель"] = DF[0]
+        form_data["член_ком1"] = ROR[0]
+    elif region == "СПБ":
+        form_data["председатель"] = DF[1]
+        form_data["член_ком1"] = ROR[1]
+
     bot.send_message(
         message.chat.id,
         "1. Владелец объекта:",
@@ -306,7 +317,7 @@ def ask_property_status(message):
 def process_property_status(message):
     if message.text == "Пропустить":
         form_data["собственность"] = "Пропущено"
-        ask_building_monument(message)
+        ask_comments_2(message)
         return
     elif message.text == "Назад":
         if "собственность" in form_data:
@@ -314,7 +325,7 @@ def process_property_status(message):
         ask_comments(message)
         return
     form_data["собственность"] = message.text
-    ask_building_monument(message)
+    ask_comments_2(message)
 
 # Функция для отправки вопроса о комментариях
 def ask_comments_2(message):
@@ -491,15 +502,15 @@ def ask_one_owner(message):
 # Функция для обработки ответа на вопрос о статусе собственности
 def process_one_owner(message):
     if message.text == "Пропустить":
-        form_data["собственник"] = "Пропущено"
-        ask_basement_use(message)
+        form_data["один_собственник"] = "Пропущено"
+        ask_comments_4(message)
         return
     elif message.text == "Назад":
-        if "собственник" in form_data:
-            del form_data["собственник"]
+        if "один_собственник" in form_data:
+            del form_data["один_собственник"]
         ask_room_basement(message)
         return
-    form_data["собственник"] = message.text
+    form_data["один_собственник"] = message.text
     ask_comments_4(message)
 
 
@@ -516,7 +527,7 @@ def ask_comments_4(message):
 def process_comments_4(message):
     if message.text == "Пропустить":
         form_data["комментарии_4"] = "Пропущено"
-        ask_basement_use(message)
+        ask_basement_use_1(message)
         return
     elif message.text == "Назад":
         if "комментарии_4" in form_data:
@@ -524,20 +535,21 @@ def process_comments_4(message):
         ask_one_owner(message)
         return
     form_data["комментарии_4"] = message.text
-    ask_basement_use(message)
+    ask_basement_use_1(message)
 
 
 # 15 Функция для отправки вопроса об использовании подвальных помещений
-def ask_basement_use(message):
+def ask_basement_use_1(message):
     bot.send_message(
         message.chat.id,
         "8. Планируется использование подвальных помещений (если да, под какие цели (подсобки, ЦХМ и т.д.)):",
         reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
     )
-    bot.register_next_step_handler(message, process_basement_use)
+    bot.register_next_step_handler(message, process_basement_use_1)
+
 
 #  Функция для обработки ответа на вопрос об использовании подвальных помещений
-def process_basement_use(message):
+def process_basement_use_1(message):
     if message.text == "Пропустить":
         form_data["подвальные_помещения"] = "Пропущено"
         ask_basement_document(message)
@@ -545,10 +557,11 @@ def process_basement_use(message):
     elif message.text == "Назад":
         if "подвальные_помещения" in form_data:
             del form_data["подвальные_помещения"]
-        ask_one_owner(message)
+        ask_comments_4(message)
         return
     form_data["подвальные_помещения"] = message.text
     ask_basement_document(message)
+
 
 # Функция для отправки вопроса о оформлении подвальных помещений
 def ask_basement_document(message):
@@ -563,16 +576,17 @@ def ask_basement_document(message):
     )
     bot.register_next_step_handler(message, process_basement_document)
 
+
 # Функция для обработки ответа на вопрос о оформлении подвальных помещений
 def process_basement_document(message):
     if message.text == "Пропустить":
         form_data["документы_подвала"] = "Пропущено"
-        ask_traffic(message)
+        ask_comments_5(message)
         return
     elif message.text == "Назад":
         if "документы_подвала" in form_data:
             del form_data["документы_подвала"]
-        ask_basement_use(message)
+        ask_basement_use_1(message)
         return
     form_data["документы_подвала"] = message.text
     ask_comments_5(message)
@@ -622,10 +636,13 @@ def process_traffic(message):
     elif message.text == "Назад":
         if "трафик" in form_data:
             del form_data["трафик"]
-        ask_basement_document(message)
+        ask_comments_5(message)
         return
     form_data["трафик"] = message.text
     ask_area(message)
+
+# Начало листа 3 -----------------------------------------
+
 
 # Функция для отправки вопроса о площади помещения
 def ask_area(message):
@@ -710,20 +727,20 @@ def askobjecttype(message):
  
 def processobjecttype(message): 
     if message.text == "Пропустить": 
-        form_data["типобъекта"] = "Пропущено" 
-        ask_basement_use(message) 
+        form_data["тип_объекта"] = "Пропущено" 
+        ask_basement_use_2(message) 
         return 
     elif message.text == "Назад": 
-        if "типобъекта" in form_data: 
-            del form_data["типобъекта"]
+        if "тип_объекта" in form_data: 
+            del form_data["тип_объекта"]
             ask_building_floors(message) 
         return 
-    form_data["типобъекта"] = message.text 
-    ask_basement_use(message)
+    form_data["тип_объекта"] = message.text 
+    ask_basement_use_2(message)
 
 
 # Функция для отправки вопроса о помещении
-def ask_basement_use(message):
+def ask_basement_use_2(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
     markup.add(types.KeyboardButton("Да"))
     markup.add(types.KeyboardButton("Нет"))
@@ -733,10 +750,10 @@ def ask_basement_use(message):
         "11. Предполагается использование подвальных помещений:",
         reply_markup=markup,
     )
-    bot.register_next_step_handler(message, process_basement_use)
+    bot.register_next_step_handler(message, process_basement_use_2)
 
 # Функция для обработки ответа на вопрос о использовании подвальных помещений
-def process_basement_use(message):
+def process_basement_use_2(message):
     if message.text == "Пропустить":
         form_data["использование_подвала"] = "Пропущено"
         ask_comment_6(message)
@@ -746,7 +763,7 @@ def process_basement_use(message):
             del form_data["использование_подвала"]
         askobjecttype(message)  # Укажите, какой вопрос требуется
         return
-    form_data["использование_поддала"] = message.text
+    form_data["использование_подвала"] = message.text
     ask_comment_6(message)
 
 # Функция для отправки комментария
@@ -1343,6 +1360,9 @@ def process_requirements(message):
 def end_form(message):
     bot.send_message(message.chat.id, "Форма заполнена! Ваши данные:")
     log_data_to_file(form_data)
+
+    file_name = get_path_to_apo()
+    insert_data_to_excel(file_name, form_data, '2')
     for key, value in form_data.items():
         bot.send_message(message.chat.id, f"{key}: {value}")
     bot.send_message(message.chat.id, "ВАЖНО! Объект будет находиться в списке объектов по которым требуется АПО до тех пор пока в таблице запуск не будет снята отметка")
@@ -1363,6 +1383,14 @@ def send_choice_message(chat_id):
         telebot.types.InlineKeyboardButton("Загрузить фото", callback_data="load_photo"))
     keyboard_2.row(telebot.types.InlineKeyboardButton("Назад", callback_data="back"))
     bot.send_message(chat_id, f"Выберите действие по объекту: {adr}.", reply_markup=keyboard_2)
+
+
+def get_path_to_apo():
+    adress = values.get(name)[number]
+    name_apo = ' '.join(adress.split(' ')[1:])
+    path_to_file = '../Объекты/' + adress + '/Акты/АПО/АПО ' + name_apo + '.xlsm'
+    print(path_to_file)
+    return path_to_file
 
 bot.polling(none_stop=True)
 
