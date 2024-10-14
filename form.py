@@ -4,7 +4,8 @@ import os
 
 
 from log_data import log_data_to_file
-from work_with_exel import get_task, get_id, file_zapusk, insert_data_to_excel
+from work_with_exel import get_task, get_id, file_zapusk
+from export import insert_data_to_excel
 from workers import DF, ROR, RP_MSK, RP_SPB
 
 bot = telebot.TeleBot('5209749192:AAEyxtpL5ndVu8-cs77LgG_W878lqKGaT-I')
@@ -1362,7 +1363,7 @@ def end_form(message):
     log_data_to_file(form_data)
 
     file_name = get_path_to_apo()
-    insert_data_to_excel(file_name, form_data, '2')
+    # insert_data_to_excel(file_name, form_data, '2')
     for key, value in form_data.items():
         bot.send_message(message.chat.id, f"{key}: {value}")
     bot.send_message(message.chat.id, "ВАЖНО! Объект будет находиться в списке объектов по которым требуется АПО до тех пор пока в таблице запуск не будет снята отметка")
