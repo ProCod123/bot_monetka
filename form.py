@@ -126,7 +126,13 @@ def start_form(message):
     form_data["id"] = message.chat.id
     form_data["филиал"] = region
     form_data["адрес"] = ' '.join(adr.split(' ')[1:])
-    form_data["рп"] = name
+    # Находим полние имя РП
+    for text in (RP_MSK + RP_SPB):
+        if name in text:
+            form_data["рп"] = text
+
+           
+
 
     if region == "МСК":
         form_data["председатель"] = DF[0]
@@ -1042,7 +1048,7 @@ def ask_roof_type(message):
 def process_roof_type(message):
     if message.text == "Пропустить":
         form_data["кровля"] = "Пропущено"
-        ask_structure_scheme(message)
+        ask_load_roof(message)
         return
     elif message.text == "Назад":
         if "кровля" in form_data:
@@ -1050,8 +1056,32 @@ def process_roof_type(message):
         ask_floor_material(message)
         return
     form_data["кровля"] = message.text
-    ask_structure_scheme(message)
+    ask_load_roof(message)
 
+
+# Функция для отправки вопроса о расчетной нагрузке кровли
+def ask_load_roof(message):
+    bot.send_message(
+        message.chat.id,
+        "Расчетная нагрузка на квадратный метр:",
+        reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
+    )
+    bot.register_next_step_handler(message, process_load_roof)
+
+
+# Функция для обработки ответа о расчетной нагрузке
+def process_load_roof(message):
+    if message.text == "Пропустить":
+        form_data["нагрузка_кровли"] = "Пропущено"
+        ask_structure_scheme(message)
+        return
+    elif message.text == "Назад":
+        if "нагрузка" in form_data:
+            del form_data["нагрузка_кровли"]
+        ask_roof_type(message)
+        return
+    form_data["нагрузка_кровли"] = message.text
+    ask_structure_scheme(message)
 
 
 # Функция для отправки вопроса о конструктивной схеме здания
@@ -1216,7 +1246,7 @@ def process_extension(message):
 def ask_ceiling_height(message):
     bot.send_message(
         message.chat.id,
-        "Увеличение объема здания за счет увеличения высоты потолков за счет выемки грунта?",
+        "Увеличение объема здания за счет увеличения высоты потолков за счет выемки грунта, переустройства полов",
         reply_markup=create_yes_no_skip_back_keyboard(),
     )
     bot.register_next_step_handler(message, process_ceiling_height)
@@ -1225,7 +1255,7 @@ def ask_ceiling_height(message):
 def process_ceiling_height(message):
     if message.text == "Пропустить":
         form_data["потолки"] = "Пропущено"
-        ask_floor_reconstruction(message)
+        ask_roof_reconstruction(message)
         return
     elif message.text == "Назад":
         if "потолки" in form_data:
@@ -1233,30 +1263,8 @@ def process_ceiling_height(message):
         ask_extension(message)
         return
     form_data["потолки"] = message.text
-    ask_floor_reconstruction(message)
-
-# Функция для отправки вопроса о переустройстве полов
-def ask_floor_reconstruction(message):
-    bot.send_message(
-        message.chat.id,
-        "Увеличение объема здания за счет переустройства полов?",
-        reply_markup=create_yes_no_skip_back_keyboard(),
-    )
-    bot.register_next_step_handler(message, process_floor_reconstruction)
-
-# Функция для обработки ответа о переустройстве полов
-def process_floor_reconstruction(message):
-    if message.text == "Пропустить":
-        form_data["полы_объем"] = "Пропущено"
-        ask_roof_reconstruction(message)
-        return
-    elif message.text == "Назад":
-        if "полы_объем" in form_data:
-            del form_data["полы_объем"]
-        ask_ceiling_height(message)
-        return
-    form_data["полы_объем"] = message.text
     ask_roof_reconstruction(message)
+
 
 # Функция для отправки вопроса о переустройстве кровли
 def ask_roof_reconstruction(message):
@@ -1276,7 +1284,7 @@ def process_roof_reconstruction(message):
     elif message.text == "Назад":
         if "кровля_переустройство" in form_data:
             del form_data["кровля_переустройство"]
-        ask_floor_reconstruction(message)
+        ask_ceiling_height(message)
         return
     form_data["кровля_переустройство"] = message.text
     ask_construction_definition(message)
@@ -1363,9 +1371,14 @@ def end_form(message):
     log_data_to_file(form_data)
 
     file_name = get_path_to_apo()
-    # insert_data_to_excel(file_name, form_data, '2')
+    insert_data_to_excel(file_name, form_data)
+
+    filled = ''
     for key, value in form_data.items():
-        bot.send_message(message.chat.id, f"{key}: {value}")
+        filled += f"{key}: {value} \n"
+    bot.send_message(message.chat.id, filled)
+    send_file_telegram(file_name, message.chat.id)
+
     bot.send_message(message.chat.id, "ВАЖНО! Объект будет находиться в списке объектов по которым требуется АПО до тех пор пока в таблице запуск не будет снята отметка")
     send_choice_message(message.chat.id)
 
@@ -1392,6 +1405,23 @@ def get_path_to_apo():
     path_to_file = '../Объекты/' + adress + '/Акты/АПО/АПО ' + name_apo + '.xlsm'
     print(path_to_file)
     return path_to_file
+
+def send_file_telegram(file_path, chat_id):
+
+    # Проверка существования файла
+    if not os.path.exists(file_path):
+        print("Файл не найден:", file_path)
+        return False
+
+    # Отправка файла
+    try:
+        with open(file_path, 'rb') as file:
+            bot.send_document(chat_id=chat_id, document=file)
+        print("Файл успешно отправлен.")
+        return True
+    except Exception as e:
+        print(f"Ошибка при отправке файла: {e}")
+        return False
 
 bot.polling(none_stop=True)
 
