@@ -125,7 +125,7 @@ def start_form(message):
     # Добавляем филиал в словарь
     form_data["id"] = message.chat.id
     form_data["филиал"] = region
-    form_data["адрес"] = adr
+    form_data["адрес"] = ' '.join(adr.split(' ')[1:])
     form_data["рп"] = name
 
     if region == "МСК":
