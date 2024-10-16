@@ -1,5 +1,5 @@
 import datetime
-import json
+
 
 
 def log_data_to_file(data, filename="log.txt"):

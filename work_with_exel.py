@@ -1,5 +1,8 @@
 import pandas as pd
 import win32com.client
+import pythoncom
+
+
 
 
 file_zapusk = '../Запуск 07.10.xlsm'
@@ -44,10 +47,14 @@ def get_name(id):
 
 
 def run_vba_macro(excel_file, module_name, macro_name):
+
+    excel = None
     try:
+        pythoncom.CoInitialize()
         # Получаем существующий экземпляр Excel, если он открыт,
         # иначе создаем новый
         excel = win32com.client.DispatchEx("Excel.Application")
+
 
         # Открываем файл, если он не открыт
         if excel_file not in [wb.FullName for wb in excel.Workbooks]:
@@ -69,5 +76,17 @@ def run_vba_macro(excel_file, module_name, macro_name):
     finally:
         if excel:
             excel.Quit() # Закрываем Excel, если он был создан
+        pythoncom.CoUninitialize()
+# n = "../Объекты/154 МСК МО, Первомайское Фоминское 23б/Акты/АПО/АПО МСК МО, Первомайское Фоминское 23б.xlsm"
 
 
+
+
+# text = 'C:/Users/user/Desktop/раб/Объекты/154 МСК МО, Первомайское Фоминское 23б/Акты/АПО/АПО МСК МО, Первомайское Фоминское 23б.xlsm'
+# text.replace(r"\\", "/")
+# print(os.path.dirname(os.path.abspath(__file__)))
+# x = (os.path.abspath('../Объекты/154 МСК МО, Первомайское Фоминское 23б/Акты/АПО/АПО МСК МО, Первомайское Фоминское 23б.xlsm'))
+
+# n = "C:\Users\user\Desktop\раб\Объекты\154 МСК МО, Первомайское Фоминское 23б\Акты\АПО\АПО МСК МО, Первомайское Фоминское 23б.xlsm"
+# run_vba_macro(text, 'module1', 'DeletePhoto')
+# run_vba_macro(n, 'module1', 'AddPhotosToSheet')
