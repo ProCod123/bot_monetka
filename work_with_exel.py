@@ -34,6 +34,15 @@ def get_id(name):
     return None # Возвращаем None, если не найдено
 
 
+def get_name(id):
+    df = pd.read_excel(file_zapusk, sheet_name='Телеграм', nrows=30)
+    for index, row in df.iterrows():
+        if row.iloc[2] == id:
+            name = row.iloc[1]
+            return name # Возвращаем значение, как только оно найдено
+    return None # Возвращаем None, если не найдено
+
+
 def run_vba_macro(excel_file, module_name, macro_name):
     try:
         # Получаем существующий экземпляр Excel, если он открыт,

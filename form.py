@@ -1,10 +1,11 @@
 import telebot
 from telebot import types
 import os
+import time
 
 
 from log_data import log_data_to_file
-from work_with_exel import get_task, get_id, file_zapusk
+from work_with_exel import get_task, get_id, get_name, file_zapusk
 from export import insert_data_to_excel
 from workers import DF, ROR, RP_MSK, RP_SPB
 
@@ -21,12 +22,14 @@ def start(message):
     values = get_task(file_zapusk)
     global keyboard
     # Создание инлайн-клавиатуры
-    for name in values:
-        keyboard = telebot.types.InlineKeyboardMarkup()
-        for adress in values.get(name):
-            keyboard.add(telebot.types.InlineKeyboardButton(adress.split(', ')[-1], callback_data=name + ',' + str(values.get(name).index(adress))))
-        # Отправка приветственного сообщения с инлайн-клавиатурой
-        bot.send_message(get_id(name), "Требуется предоставить АПО по объектам:", reply_markup=keyboard)
+    # for name in values:
+
+    name = get_name(message.chat.id)
+    keyboard = telebot.types.InlineKeyboardMarkup()
+    for adress in values.get(name):
+        keyboard.add(telebot.types.InlineKeyboardButton(adress.split(', ')[-1], callback_data=name + ',' + str(values.get(name).index(adress))))
+    # Отправка приветственного сообщения с инлайн-клавиатурой
+    bot.send_message(message.chat.id, "Требуется предоставить АПО по объектам:", reply_markup=keyboard)
      
 
 @bot.callback_query_handler(func=lambda call: True)
