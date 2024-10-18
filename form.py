@@ -11,28 +11,38 @@ from workers import DF, ROR, RP_MSK, RP_SPB
 
 bot = telebot.TeleBot('5209749192:AAEyxtpL5ndVu8-cs77LgG_W878lqKGaT-I')
 
-
-
 form_data = {}
 
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    global values
-    
+
+    global values, keyboard
+
     # Отображаем значок загрузки
     bot.send_chat_action(message.chat.id, 'typing')
+    messagetoedit = bot.send_message(message.chat.id, 'Подождите...')
 
-    values = get_task(file_zapusk)
-    global keyboard
+    # Настраиваем минимальную периодичность обновлений 
+    if form_data.get('время_обновления'):
+        difference = time.time() - form_data['время_обновления']
+        if difference < 30:
+            pass
+        else:
+            values = get_task(file_zapusk)
+            form_data['время_обновления'] = time.time()
+    else:
+        values = get_task(file_zapusk)
+        form_data['время_обновления'] = time.time()
 
     name = get_name(message.chat.id)
+    bot.delete_message(message.chat.id, message_id=messagetoedit.message_id)
     keyboard = telebot.types.InlineKeyboardMarkup()
     for adress in values.get(name):
         keyboard.add(telebot.types.InlineKeyboardButton(adress.split(', ')[-1], callback_data=name + ',' + str(values.get(name).index(adress))))
     # Отправка приветственного сообщения с инлайн-клавиатурой
     bot.send_message(message.chat.id, "Требуется предоставить АПО по объектам:", reply_markup=keyboard)
-     
+
 
 @bot.callback_query_handler(func=lambda call: True)
 def handle_button_press(call):
@@ -46,7 +56,6 @@ def handle_button_press(call):
     # Если для пользователя нет данных, создаем словарь для него
     if user_id not in form_data:
         form_data[user_id] = {}
-
     try:
         if len(call.data.split(',')) > 1:
             form_data[user_id]['name'] = call.data.split(',')[0]
@@ -54,7 +63,6 @@ def handle_button_press(call):
             form_data[user_id]['adr'] = values.get(form_data[user_id]['name'])[form_data[user_id]['number']]
             form_data[user_id]['филиал'] = form_data[user_id]['adr'].split(' ')[1]
             send_choice_message(call.message.chat.id)
-
 
         if call.data == "begin_apo":
             # Функция для отправки первого вопроса
@@ -99,7 +107,6 @@ def handle_button_press(call):
         elif call.data == '9':
             folder = '9 Схема кровли'
 
-
         # Вопрос о дальнейшей отправке
         if call.data == 'Yes':
             bot.send_message(call.message.chat.id, "Выберите тип фото:", reply_markup=keyboard_folder)
@@ -107,6 +114,8 @@ def handle_button_press(call):
             bot.send_message(call.message.chat.id, "Требуется предоставить АПО по объектам:", reply_markup=keyboard)
 
         if folder is not None:
+
+            # Каталог
             form_data[user_id]['objects_path'] = os.path.abspath("..\\" + os.curdir) + "\Объекты" + '\\' + form_data[user_id]['adr'] + "\\Акты\\АПО\\Фото\\" + folder
             bot.send_message(call.message.chat.id, 'Отправьте фото! Путь к папке: ' + form_data[user_id]['objects_path'])
     except Exception as e:
@@ -1420,7 +1429,7 @@ def get_path_to_apo(chat_id):
     adress = values.get(form_data[chat_id]['name'])[form_data[chat_id]['number']]
     name_apo = ' '.join(adress.split(' ')[1:])
     path_to_file = '../Объекты/' + adress + '/Акты/АПО/АПО ' + name_apo + '.xlsm'
-
+    # Каталог
     return path_to_file
 
 def send_file_telegram(file_path, chat_id):
@@ -1439,6 +1448,7 @@ def send_file_telegram(file_path, chat_id):
     except Exception as e:
         print(f"Ошибка при отправке файла: {e}")
         return False
+
 
 bot.polling(none_stop=True)
 

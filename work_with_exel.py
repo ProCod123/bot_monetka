@@ -4,7 +4,6 @@ import pythoncom
 
 
 
-
 file_zapusk = '../Запуск 07.10.xlsm'
 
 
