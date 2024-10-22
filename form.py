@@ -111,6 +111,10 @@ def handle_button_press(call):
         if call.data == 'Yes':
             bot.send_message(call.message.chat.id, "Выберите тип фото:", reply_markup=keyboard_folder)
         elif call.data == 'No':
+            # Если пользователь не будет больше подгружать фото высылаем файл
+            file_name = get_path_to_apo(call.message.chat.id)
+            send_file_telegram(file_name, call.message.chat.id)
+
             bot.send_message(call.message.chat.id, "Требуется предоставить АПО по объектам:", reply_markup=keyboard)
 
         if folder is not None:
@@ -176,7 +180,7 @@ def start_form(message):
 def process_owner(message):
     if message.text == "Пропустить":
         form_data[message.chat.id]["владелец"] = "Пропущено"
-        ask_owner_information(message)
+        ask_possibly(message)
         return
     elif message.text == "Назад":
         if "владелец" in form_data:
@@ -184,7 +188,7 @@ def process_owner(message):
         start_form(message)
         return
     form_data[message.chat.id]["владелец"] = message.text
-    ask_owner_information(message)
+    ask_possibly(message)
 
 
 # Контакты владельца
@@ -678,7 +682,7 @@ def process_traffic(message):
 def ask_area(message):
     bot.send_message(
         message.chat.id,
-        "9. Площадь помещения, планируемая в аренду/покупку:",
+        "10. Площадь помещения, планируемая в аренду/покупку:",
         reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
     )
     bot.register_next_step_handler(message, process_area)
@@ -701,7 +705,7 @@ def process_area(message):
 def ask_floor(message):
     bot.send_message(
         message.chat.id,
-        "10. Расположено на этаже:",
+        "11. Расположено на этаже:",
         reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
     )
     bot.register_next_step_handler(message, process_floor)
@@ -751,7 +755,7 @@ def askobjecttype(message):
     markup.add(types.KeyboardButton("Цоколь/подвал. Этаж")) 
     markup.add(types.KeyboardButton("Иные объекты")) 
     markup.add(types.KeyboardButton("Пропустить"), types.KeyboardButton("Назад")) 
-    bot.send_message(message.chat.id, "11. Тип объекта:", reply_markup=markup) 
+    bot.send_message(message.chat.id, "12. Тип объекта:", reply_markup=markup) 
     bot.register_next_step_handler(message, processobjecttype)
 
  
@@ -777,7 +781,7 @@ def ask_basement_use_2(message):
     markup.add(types.KeyboardButton("Пропустить"), types.KeyboardButton("Назад"))
     bot.send_message(
         message.chat.id,
-        "11. Предполагается использование подвальных помещений:",
+        "13. Предполагается использование подвальных помещений:",
         reply_markup=markup,
     )
     bot.register_next_step_handler(message, process_basement_use_2)
@@ -827,7 +831,7 @@ def ask_plan_match(message):
     markup.add(types.KeyboardButton("Пропустить"), types.KeyboardButton("Назад"))
     bot.send_message(
         message.chat.id,
-        "12. Фактическая планировка соответствует техпаспорту:",
+        "14. Фактическая планировка соответствует техпаспорту:",
         reply_markup=markup,
     )
     bot.register_next_step_handler(message, process_plan_match)
@@ -1161,7 +1165,7 @@ def ask_opening_in_wall(message):
     markup.add(types.KeyboardButton("Пропустить"), types.KeyboardButton("Назад"))
     bot.send_message(
         message.chat.id,
-        "14. На планируемом объекте потребуется устройство проема в несущей стене:",
+        "На планируемом объекте потребуется устройство проема в несущей стене:",
         reply_markup=markup,
     )
     bot.register_next_step_handler(message, process_opening_in_wall)
@@ -1344,7 +1348,7 @@ def ask_expertise(message):
     markup.add(types.KeyboardButton("Пропустить"), types.KeyboardButton("Назад"))
     bot.send_message(
         message.chat.id,
-        "15. Прохождение экспертизы проектной документации:",
+        "Прохождение экспертизы проектной документации:",
         reply_markup=markup,
     )
     bot.register_next_step_handler(message, process_expertise)
@@ -1367,7 +1371,7 @@ def process_expertise(message):
 def ask_requirements(message):
     bot.send_message(
         message.chat.id,
-        "16. Предложение для рассмотрения комиссией требований по отклонению, дополнению, уточнению к действующему стандарту на строительство и оснащение магазинов ТС Монетка, применительно к данному объекту:",
+        "14. Предложение для рассмотрения комиссией требований по отклонению, дополнению, уточнению к действующему стандарту на строительство и оснащение магазинов ТС Монетка, применительно к данному объекту:",
         reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
     )
     bot.register_next_step_handler(message, process_requirements)
@@ -1387,6 +1391,209 @@ def process_requirements(message):
     end_form(message)
 
 # Конец листа 3 ---------------------------------------------------------------
+
+
+# Функция для отправки вопроса о требованиях по отклонению и уточнению
+def ask_possibly(message):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    markup.add(types.KeyboardButton("Возможно"))
+    markup.add(types.KeyboardButton("Невозможно"))
+    markup.add(types.KeyboardButton("Пропустить"), types.KeyboardButton("Назад"))
+    bot.send_message(
+        message.chat.id,
+        "15. ВЫВОД: Использование помещений/здания в качестве магазина ТС «Монетка»:",
+        reply_markup=markup,
+    )
+    bot.register_next_step_handler(message, process_ask_possibly)
+
+# Функция для обработки ответа о требованиях
+def process_ask_possibly(message):
+    if message.text == "Пропустить":
+        form_data[message.chat.id]["возможность"] = "Пропущено"
+        work_not_required(message)
+        return
+    elif message.text == "Назад":
+        if "возможность" in form_data:
+            del form_data[message.chat.id]["возможность"]
+        ask_requirements(message)
+        return
+    elif message.text == "Невозможно":
+        form_data[message.chat.id]["возможность"] = message.text
+        why_impossible(message)
+        return
+    form_data[message.chat.id]["возможность"] = message.text
+    work_not_required(message)
+
+
+# Функция для отправки вопроса о причинах невозможности
+def why_impossible(message):
+    bot.send_message(
+        message.chat.id,
+        "Укажите причину по которой использование помещений/здания в качестве магазина ТС «Монетка» невозможно:",
+        reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
+    )
+    bot.register_next_step_handler(message, process_why_impossible)
+
+
+# Функция для обработки ответа о о причинах невозможности
+def process_why_impossible(message):
+    if message.text == "Пропустить":
+        form_data[message.chat.id]["причина_невозможности"] = "Пропущено"
+        work_not_required(message)
+        return
+    elif message.text == "Назад":
+        if "причина_невозможности" in form_data:
+            del form_data[message.chat.id]["причина_невозможности"]
+        ask_possibly(message)
+        return
+    form_data[message.chat.id]["причина_невозможности"] = message.text
+    work_not_required(message)
+
+
+ # Функция для отправки вопроса о требованиях по отклонению и уточнению
+def work_not_required(message):
+    bot.send_message(
+        message.chat.id,
+        "Работы, не требующие выполнения/замены (оставить существующие на объекте):",
+        reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
+    )
+    bot.register_next_step_handler(message, process_work_not_required)
+
+
+# Функция для обработки ответа о требованиях
+def process_work_not_required(message):
+    if message.text == "Пропустить":
+        form_data[message.chat.id]["работы_не_требующие"] = "Пропущено"
+        ask_about_nonstandard_works(message)
+        return
+    elif message.text == "Назад":
+        if "работы_не_требующие" in form_data:
+            del form_data[message.chat.id]["работы_не_требующие"]
+        ask_possibly(message)
+        return
+    form_data[message.chat.id]["работы_не_требующие"] = message.text
+    ask_about_nonstandard_works(message)
+
+# Нетиповые работы
+def ask_about_nonstandard_works(message):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    markup.add(types.KeyboardButton("Да"))
+    markup.add(types.KeyboardButton("Нет"))
+    markup.add(types.KeyboardButton("Пропустить"), types.KeyboardButton("Назад"))
+    bot.send_message(
+        message.chat.id,
+        "Есть ли необходимость в выполнении нетиповых работ?",
+        reply_markup=markup,
+    )
+    bot.register_next_step_handler(message, process_ask_about_nonstandard_works)
+
+def process_ask_about_nonstandard_works(message):
+    if message.text == "Пропустить":
+        form_data[message.chat.id]["нетиповые_работы"] = "Пропущено"
+        end_form(message)
+        return
+    elif message.text == "Назад":
+        if "нетиповые_работы" in form_data:
+            del form_data[message.chat.id]["нетиповые_работы"]
+        work_not_required(message)
+        return
+    elif message.text == "Нет":
+        end_form(message)
+        return
+    elif message.text == "Да":
+        ask_for_nonstandard_work_details(message)
+        return
+
+def ask_for_nonstandard_work_details(message):
+    form_data[message.chat.id]["нетиповые_работы"] = []
+    ask_for_work_name(message)
+
+def ask_for_work_name(message):
+    bot.send_message(
+        message.chat.id,
+        "Введите наименование работ:",
+    )
+    bot.register_next_step_handler(message, process_work_name)
+
+def process_work_name(message):
+    work_name = message.text
+    count = 1
+    form_data[message.chat.id]["нетиповые_работы"].append({'наименование'+ str(count): work_name})
+    ask_for_work_deadline(message)
+
+def ask_for_work_deadline(message):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    markup.add(types.KeyboardButton("до АПП"))
+    markup.add(types.KeyboardButton("до ВПК"))
+    markup.add(types.KeyboardButton("Иной срок"))
+    bot.send_message(
+        message.chat.id,
+        "Срок выполнения работ:",
+        reply_markup=markup,
+    )
+    bot.register_next_step_handler(message, process_work_deadline)
+
+def process_work_deadline(message):
+    deadline = message.text
+    form_data[message.chat.id]["нетиповые_работы"][-1]["срок"] = deadline
+    ask_for_work_responsible(message)
+
+def process_work_deadline(message):
+    deadline = message.text
+    if deadline == "Иной срок":
+        ask_for_custom_deadline(message)
+        return
+    form_data[message.chat.id]["нетиповые_работы"][-1]["срок"] = deadline
+    ask_for_work_responsible(message)
+
+def ask_for_custom_deadline(message):
+    bot.send_message(
+        message.chat.id,
+        "Введите срок:",
+    )
+    bot.register_next_step_handler(message, process_custom_deadline)
+
+def process_custom_deadline(message):
+    custom_deadline = message.text
+    form_data[message.chat.id]["нетиповые_работы"][-1]["срок"] = custom_deadline
+    ask_for_work_responsible(message)
+
+def ask_for_work_responsible(message):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    markup.add(types.KeyboardButton("НОР"))
+    markup.add(types.KeyboardButton("РП"))
+    bot.send_message(
+        message.chat.id,
+        "Ответственный за выполнение:",
+        reply_markup=markup,
+    )
+    bot.register_next_step_handler(message, process_work_responsible)
+
+def process_work_responsible(message):
+    responsible = message.text
+    form_data[message.chat.id]["нетиповые_работы"][-1]["ответственный"] = responsible
+    ask_for_more_works(message)
+
+def ask_for_more_works(message):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    markup.add(types.KeyboardButton("Да"))
+    markup.add(types.KeyboardButton("Нет"))
+    bot.send_message(
+        message.chat.id,
+        "Нужно ли добавить еще работы?",
+        reply_markup=markup,
+    )
+    bot.register_next_step_handler(message, process_more_works)
+
+def process_more_works(message):
+    if message.text == "Да":
+        ask_for_nonstandard_work_details(message)
+        return
+    elif message.text == "Нет":
+        end_form(message)
+        return
+
+
 
 
 # Функция для завершения формы

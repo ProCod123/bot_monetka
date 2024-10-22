@@ -28,11 +28,15 @@ def insert_data_to_excel(file_name, data_dict):
                 worksheet["C38"] = ROR[0]
             else:
                 worksheet["C38"] = ROR[1]
-
+            
             mark = (
                     'E15', 'E16', 'E17', 'E19', 'E20', 'E21', 'F23', 'H23', 'E20', 'F24','H24', 'F25', 'H25', 'F27', 'H27',
                     'F28', 'H28', 'E33', 'J33', 'E35', 'J35'
                     )
+            
+            # Очищаем ранее заполненные данные
+            for cell in mark:
+                worksheet[cell] = ''
 
             # 5. Право владения объектом, планируется  по Договору:
             if data_dict.get("право_владения") == "Аренда":
@@ -177,7 +181,11 @@ def insert_data_to_excel(file_name, data_dict):
 
             mark = ("E7", "E8", "E9", "E10", "H12", "J12", "E15", "G15", "E32", "J32", "E33", 
                     "J33", "E35", "J35", "E39", "J39", "E40", "J40", "E42", "J42", "E49", "J49")
-            
+
+            # Очищаем ранее заполненные данные
+            for cell in mark:
+                worksheet[cell] = ''
+
             cell_mapping = {
                 "площадь_помещенияь": "C4",
                 "этаж": "B5",

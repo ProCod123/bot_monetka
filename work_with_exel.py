@@ -62,11 +62,11 @@ def run_vba_macro(excel_file, module_name, macro_name):
         # Находим модуль и макрос 
         module = workbook.VBProject.VBComponents(module_name)
         macro = module.CodeModule.Lines(1, module.CodeModule.CountOfLines)
-        
+
         excel.Run(macro_name) # Запускаем макрос
         workbook.Save() # Сохраняем изменения в файле
         workbook.Close() # Закрываем файл
-        
+
         print(f"VBA-макрос '{macro_name}' в модуле '{module_name}' успешно выполнен в файле '{excel_file}'")
 
     except Exception as e:
@@ -76,16 +76,3 @@ def run_vba_macro(excel_file, module_name, macro_name):
         if excel:
             excel.Quit() # Закрываем Excel, если он был создан
         pythoncom.CoUninitialize()
-# n = "../Объекты/154 МСК МО, Первомайское Фоминское 23б/Акты/АПО/АПО МСК МО, Первомайское Фоминское 23б.xlsm"
-
-
-
-
-# text = 'C:/Users/user/Desktop/раб/Объекты/154 МСК МО, Первомайское Фоминское 23б/Акты/АПО/АПО МСК МО, Первомайское Фоминское 23б.xlsm'
-# text.replace(r"\\", "/")
-# print(os.path.dirname(os.path.abspath(__file__)))
-# x = (os.path.abspath('../Объекты/154 МСК МО, Первомайское Фоминское 23б/Акты/АПО/АПО МСК МО, Первомайское Фоминское 23б.xlsm'))
-
-# n = "C:\Users\user\Desktop\раб\Объекты\154 МСК МО, Первомайское Фоминское 23б\Акты\АПО\АПО МСК МО, Первомайское Фоминское 23б.xlsm"
-# run_vba_macro(text, 'module1', 'DeletePhoto')
-# run_vba_macro(n, 'module1', 'AddPhotosToSheet')
