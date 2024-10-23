@@ -1460,7 +1460,7 @@ def work_not_required(message):
     bot.register_next_step_handler(message, process_work_not_required)
 
 
-# Функция для обработки ответа о требованиях
+# Работы, не требующие выполнения/замены
 def process_work_not_required(message):
     if message.text == "Пропустить":
         form_data[message.chat.id]["работы_не_требующие"] = "Пропущено"
@@ -1473,6 +1473,7 @@ def process_work_not_required(message):
         return
     form_data[message.chat.id]["работы_не_требующие"] = message.text
     ask_about_nonstandard_works(message)
+
 
 # Нетиповые работы
 def ask_about_nonstandard_works(message):
@@ -1490,7 +1491,7 @@ def ask_about_nonstandard_works(message):
 def process_ask_about_nonstandard_works(message):
     if message.text == "Пропустить":
         form_data[message.chat.id]["нетиповые_работы"] = "Пропущено"
-        end_form(message)
+        ask_for_requirements_(message)
         return
     elif message.text == "Назад":
         if "нетиповые_работы" in form_data:
@@ -1498,14 +1499,15 @@ def process_ask_about_nonstandard_works(message):
         work_not_required(message)
         return
     elif message.text == "Нет":
-        end_form(message)
+        ask_for_requirements_(message)
         return
     elif message.text == "Да":
         ask_for_nonstandard_work_details(message)
         return
 
 def ask_for_nonstandard_work_details(message):
-    form_data[message.chat.id]["нетиповые_работы"] = []
+    if "нетиповые_работы" not in form_data[message.chat.id]:
+        form_data[message.chat.id]["нетиповые_работы"] = []
     ask_for_work_name(message)
 
 def ask_for_work_name(message):
@@ -1517,8 +1519,7 @@ def ask_for_work_name(message):
 
 def process_work_name(message):
     work_name = message.text
-    count = 1
-    form_data[message.chat.id]["нетиповые_работы"].append({'наименование'+ str(count): work_name})
+    form_data[message.chat.id]["нетиповые_работы"].append({'тип_работ' : work_name})
     ask_for_work_deadline(message)
 
 def ask_for_work_deadline(message):
@@ -1590,9 +1591,60 @@ def process_more_works(message):
         ask_for_nonstandard_work_details(message)
         return
     elif message.text == "Нет":
-        end_form(message)
+        ask_for_requirements_(message)
         return
 
+
+def ask_for_requirements_(message):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    markup.add(types.KeyboardButton("Пропустить"))
+    markup.add(types.KeyboardButton("Назад"))
+    bot.send_message(
+        message.chat.id,
+        "Требования, утвержденные к выполнению применительно к данному объекту (дополнения, уточнения, отклонения от Стандарта):",
+        reply_markup=markup,
+    )
+    bot.register_next_step_handler(message, process_requirements_)
+
+def process_requirements_(message):
+    if message.text == "Пропустить":
+        form_data[message.chat.id]["требования_стандарт"] = "Пропущено"
+        ask_for_construction_deadline(message)
+        return
+    elif message.text == "Назад":
+        if "требования_стандарт" in form_data[message.chat.id]:
+            del form_data[message.chat.id]["требования_стандарт"][-1]
+        ask_for_more_works(message)
+        return
+    requirements = message.text
+    form_data[message.chat.id]["требования_стандарт"] = requirements
+    ask_for_construction_deadline(message)
+
+def ask_for_construction_deadline(message):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    markup.add(types.KeyboardButton("Пропустить"))
+    markup.add(types.KeyboardButton("Назад"))
+    bot.send_message(
+        message.chat.id,
+        "Комиссией определен предварительный срок строительства:",
+        reply_markup=markup,
+    )
+    bot.register_next_step_handler(message, process_construction_deadline)
+
+
+def process_construction_deadline(message):
+    if message.text == "Пропустить":
+        form_data[message.chat.id]["срок_строительства"] = "Пропущено"
+        end_form(message)
+        return
+    elif message.text == "Назад":
+        if "срок_строительства" in form_data[message.chat.id]:
+            del form_data[message.chat.id]["срок_строительства"]
+        ask_for_requirements_(message)
+        return
+    construction_deadline = message.text
+    form_data[message.chat.id]["срок_строительства"] = construction_deadline
+    end_form(message)
 
 
 

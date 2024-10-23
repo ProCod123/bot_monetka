@@ -9,7 +9,6 @@ def insert_data_to_excel(file_name, data_dict):
     except FileNotFoundError:
         workbook = openpyxl.Workbook()
 
-
     for sheet_name in ('1', '2', '3', '4 гор', '5-8 гор', '9-10', '11'):
         worksheet = workbook[sheet_name] # Получение листа
 
@@ -237,10 +236,47 @@ def insert_data_to_excel(file_name, data_dict):
             worksheet['B58'] = data_dict.get('рп')
 
         elif sheet_name == '11':
+            worksheet['A12'] = data_dict.get('')
             worksheet['B47'] = data_dict.get('рп')
-
             worksheet['B44'] = data_dict.get('председатель')
-   
+            mark = (
+                    'B6', 'B10',
+                    )
+            
+            # Очищаем ранее заполненные данные
+            for cell in mark:
+                worksheet[cell] = ''
+
+            for row in range(21, 34):
+                for col in (1, 2, 3, 4, 5, 9):
+                    worksheet.cell(row=row, column=col).value = ''   
+
+            # ВЫВОД: Использование помещений/здания в качестве магазина ТС «Монетка»:
+            if data_dict.get("возможность") == "Возможно":
+                possibly = "B6"
+            else:
+                possibly = "B10"
+
+            cell_mapping = {
+                "возможность" : possibly,
+                "причина_невозможности": "A12",
+                "работы_не_требующие": "A15",
+                "требования" : "A37",
+                "срок_строительства" : "D41"
+            }
+            # Заполняем таблицу
+            if "нетиповые_работы" in data_dict:
+                for i, item in enumerate(data_dict.get("нетиповые_работы")):
+                    worksheet['A' + str(21 + i)] = i + 1
+                    worksheet['B' + str(21 + i)] = item.get("тип_работ")
+                    if item.get("срок") == "до АПП":
+                        worksheet['C' + str(21 + i)] = "X"
+                    elif item.get("срок") == "до ВПК":
+                        worksheet['D' + str(21 + i)] = "X"
+                    else:
+                        worksheet['E' + str(21 + i)] = "X"
+                    worksheet['I' + str(21 + i)] = item.get("ответственный")
+    
 
         # Запись данных в ячейки
         for key, value in data_dict.items():
