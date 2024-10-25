@@ -36,12 +36,16 @@ def start(message):
         form_data['время_обновления'] = time.time()
 
     name = get_name(message.chat.id)
-    bot.delete_message(message.chat.id, message_id=messagetoedit.message_id)
-    keyboard = telebot.types.InlineKeyboardMarkup()
-    for adress in values.get(name):
-        keyboard.add(telebot.types.InlineKeyboardButton(adress.split(', ')[-1], callback_data=name + ',' + str(values.get(name).index(adress))))
-    # Отправка приветственного сообщения с инлайн-клавиатурой
-    bot.send_message(message.chat.id, "Требуется предоставить АПО по объектам:", reply_markup=keyboard)
+    
+    if name is None:
+         bot.send_message(message.chat.id, "Ваш ID отсутствует в списке! Обратитесь к администратору.")
+    else:     
+        bot.delete_message(message.chat.id, message_id=messagetoedit.message_id)
+        keyboard = telebot.types.InlineKeyboardMarkup()
+        for adress in values.get(name):
+            keyboard.add(telebot.types.InlineKeyboardButton(adress.split(', ')[-1], callback_data=name + ',' + str(values.get(name).index(adress))))
+        # Отправка приветственного сообщения с инлайн-клавиатурой
+        bot.send_message(message.chat.id, "Требуется предоставить АПО по объектам:", reply_markup=keyboard)
 
 
 @bot.callback_query_handler(func=lambda call: True)
