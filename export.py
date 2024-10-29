@@ -266,16 +266,17 @@ def insert_data_to_excel(file_name, data_dict):
             }
             # Заполняем таблицу
             if "нетиповые_работы" in data_dict:
-                for i, item in enumerate(data_dict.get("нетиповые_работы")):
-                    worksheet['A' + str(21 + i)] = i + 1
-                    worksheet['B' + str(21 + i)] = item.get("тип_работ")
-                    if item.get("срок") == "до АПП":
-                        worksheet['C' + str(21 + i)] = "X"
-                    elif item.get("срок") == "до ВПК":
-                        worksheet['D' + str(21 + i)] = "X"
-                    else:
-                        worksheet['E' + str(21 + i)] = "X"
-                    worksheet['I' + str(21 + i)] = item.get("ответственный")
+                if data_dict.get("нетиповые_работы") != "Пропущено":
+                    for i, item in enumerate(data_dict.get("нетиповые_работы")):
+                        worksheet['A' + str(21 + i)] = i + 1
+                        worksheet['B' + str(21 + i)] = item.get("тип_работ")
+                        if item.get("срок") == "до АПП":
+                            worksheet['C' + str(21 + i)] = "X"
+                        elif item.get("срок") == "до ВПК":
+                            worksheet['D' + str(21 + i)] = "X"
+                        else:
+                            worksheet['E' + str(21 + i)] = "X"
+                        worksheet['I' + str(21 + i)] = item.get("ответственный")
     
 
         # Запись данных в ячейки
