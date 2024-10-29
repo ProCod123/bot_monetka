@@ -9,6 +9,15 @@ from work_with_exel import get_task, get_name, file_zapusk, run_vba_macro
 from export import insert_data_to_excel
 from workers import DF, ROR, RP_MSK, RP_SPB
 
+
+# Вариант запуска local/network
+type_start = 'local'
+if type_start == 'local':
+    path_to_folder = os.path.abspath("..\\" + os.curdir)
+else:
+    path_to_folder = '\\monetka.org\storage\Департамент строительства - Д\Развитие Запад'    
+
+
 bot = telebot.TeleBot('5209749192:AAEyxtpL5ndVu8-cs77LgG_W878lqKGaT-I')
 
 form_data = {}
@@ -115,16 +124,41 @@ def handle_button_press(call):
         if call.data == 'Yes':
             bot.send_message(call.message.chat.id, "Выберите тип фото:", reply_markup=keyboard_folder)
         elif call.data == 'No':
-            # Если пользователь не будет больше подгружать фото высылаем файл
+
+            # Если пользователь не будет больше подгружать фото 
+            # Запуск макроса собирающего фото
+            path_script = os.path.abspath(get_path_to_apo(call.message.chat.id)).replace("\\", "/")
+            # Отображаем значок загрузки
+            bot.send_chat_action(call.message.chat.id, 'typing')
+            messagetoedit = bot.send_message(call.message.chat.id, 'Подождите...')
+
+            run_vba_macro(path_script, 'module1', 'AddPhotosToSheet')
+
+            # удаляем сообщение подождите...
+            bot.delete_message(call.message.chat.id, message_id=messagetoedit.message_id)
+
+            keyboard_approve = telebot.types.InlineKeyboardMarkup()
+            keyboard_approve.add(telebot.types.InlineKeyboardButton("Согласовать", callback_data="approve"), telebot.types.InlineKeyboardButton("Пропустить", callback_data="not_approve"))
+            bot.send_message(call.message.chat.id, "Для добавления подписи в документ нажмите Согласовать", reply_markup=keyboard_approve)
+        
+        elif call.data == 'approve':
+            # Вставляем подпись
+            file_name = os.path.abspath(get_path_to_apo(call.message.chat.id)).replace("\\", "/")
+            print(file_name)
+            run_vba_macro(file_name, 'module2', 'InsertImage')
+
+            bot.send_message(call.message.chat.id, "Подпись добавлена!")
+            # Отправляем файл
+            send_file_telegram(file_name, call.message.chat.id)
+            bot.send_message(call.message.chat.id, "Требуется предоставить АПО по объектам:", reply_markup=keyboard)
+
+        elif call.data == 'not_approve':
             file_name = get_path_to_apo(call.message.chat.id)
             send_file_telegram(file_name, call.message.chat.id)
-
             bot.send_message(call.message.chat.id, "Требуется предоставить АПО по объектам:", reply_markup=keyboard)
 
         if folder is not None:
-
-            # Каталог
-            form_data[user_id]['objects_path'] = os.path.abspath("..\\" + os.curdir) + "\Объекты" + '\\' + form_data[user_id]['adr'] + "\\Акты\\АПО\\Фото\\" + folder
+            form_data[user_id]['objects_path'] = path_to_folder + "\Объекты" + '\\' + form_data[user_id]['adr'] + "\\Акты\\АПО\\Фото\\" + folder
             bot.send_message(call.message.chat.id, 'Отправьте фото! Путь к папке: ' + form_data[user_id]['objects_path'])
     except Exception as e:
         print(e)
@@ -141,12 +175,6 @@ def handle_photo(message):
     filepath = os.path.join(form_data[message.chat.id]['objects_path'], file_info.file_path.split('/')[-1])
     with open(filepath, 'wb') as new_file:
         new_file.write(downloaded_file)
-
-    # Запуск макроса собирающего фото
-    path_script = os.path.abspath(get_path_to_apo(message.chat.id)).replace("\\", "/")
-    run_vba_macro(path_script, 'module1', 'DeletePhoto')
-    run_vba_macro(path_script, 'module1', 'AddPhotosToSheet')
-
 
     # Запрос на продолжение
     keyboard_foto = telebot.types.InlineKeyboardMarkup()
@@ -184,7 +212,7 @@ def start_form(message):
 def process_owner(message):
     if message.text == "Пропустить":
         form_data[message.chat.id]["владелец"] = "Пропущено"
-        ask_possibly(message)
+        ask_owner_information(message)
         return
     elif message.text == "Назад":
         if "владелец" in form_data:
@@ -192,7 +220,7 @@ def process_owner(message):
         start_form(message)
         return
     form_data[message.chat.id]["владелец"] = message.text
-    ask_possibly(message)
+    ask_owner_information(message)
 
 
 # Контакты владельца
@@ -1375,7 +1403,7 @@ def process_expertise(message):
 def ask_requirements(message):
     bot.send_message(
         message.chat.id,
-        "14. Предложение для рассмотрения комиссией требований по отклонению, дополнению, уточнению к действующему стандарту на строительство и оснащение магазинов ТС Монетка, применительно к данному объекту:",
+        "15. Предложение для рассмотрения комиссией требований по отклонению, дополнению, уточнению к действующему стандарту на строительство и оснащение магазинов ТС Монетка, применительно к данному объекту:",
         reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
     )
     bot.register_next_step_handler(message, process_requirements)
@@ -1384,7 +1412,7 @@ def ask_requirements(message):
 def process_requirements(message):
     if message.text == "Пропустить":
         form_data[message.chat.id]["требования"] = "Пропущено"
-        end_form(message)
+        ask_possibly(message)
         return
     elif message.text == "Назад":
         if "требования" in form_data:
@@ -1392,7 +1420,7 @@ def process_requirements(message):
         ask_expertise(message)
         return
     form_data[message.chat.id]["требования"] = message.text
-    end_form(message)
+    ask_possibly(message)
 
 # Конец листа 3 ---------------------------------------------------------------
 
@@ -1654,7 +1682,7 @@ def process_construction_deadline(message):
 
 # Функция для завершения формы
 def end_form(message):
-    bot.send_message(message.chat.id, "Форма заполнена! Данные добавлены в АПО")
+    bot.send_message(message.chat.id, "Форма заполнена! Данные добавлены в АПО (при повторном заполнении АПО данные будут перезаписаны). Далее можно загрузить фото.")
     log_data_to_file(form_data[message.chat.id])
 
     file_name = get_path_to_apo(message.chat.id)
@@ -1665,7 +1693,8 @@ def end_form(message):
     # for key, value in form_data[message.chat.id].items():
     #     filled += f"{key}: {value} \n"
     # bot.send_message(message.chat.id, filled)
-    send_file_telegram(file_name, message.chat.id)
+    
+    # send_file_telegram(file_name, message.chat.id)
 
     bot.send_message(message.chat.id, "ВАЖНО! Объект будет находиться в списке объектов по которым требуется АПО до тех пор пока в таблице запуск не будет снята отметка")
     send_choice_message(message.chat.id)
@@ -1691,8 +1720,10 @@ def send_choice_message(chat_id):
 def get_path_to_apo(chat_id):
     adress = values.get(form_data[chat_id]['name'])[form_data[chat_id]['number']]
     name_apo = ' '.join(adress.split(' ')[1:])
-    path_to_file = '../Объекты/' + adress + '/Акты/АПО/АПО ' + name_apo + '.xlsm'
-    # Каталог
+    if type_start == 'local':    
+        path_to_file = '../Объекты/' + adress + '/Акты/АПО/АПО ' + name_apo + '.xlsm'
+    else:
+        path_to_file = '//monetka.org/storage/Департамент строительства - Д/Развитие Запад/Объекты/' + adress + '/Акты/АПО/АПО ' + name_apo + '.xlsm'    
     return path_to_file
 
 def send_file_telegram(file_path, chat_id):
