@@ -21,6 +21,7 @@ else:
 bot = telebot.TeleBot('5209749192:AAEyxtpL5ndVu8-cs77LgG_W878lqKGaT-I')
 
 form_data = {}
+values = get_task(file_zapusk)
 
 
 @bot.message_handler(commands=['start'])
@@ -35,7 +36,7 @@ def start(message):
     # Настраиваем минимальную периодичность обновлений 
     if form_data.get('время_обновления'):
         difference = time.time() - form_data['время_обновления']
-        if difference < 30:
+        if difference < 60:
             pass
         else:
             values = get_task(file_zapusk)
@@ -45,10 +46,10 @@ def start(message):
         form_data['время_обновления'] = time.time()
 
     name = get_name(message.chat.id)
-    
+
     if name is None:
-         bot.send_message(message.chat.id, "Ваш ID отсутствует в списке! Обратитесь к администратору.")
-    else:     
+        bot.send_message(message.chat.id, "Ваш ID отсутствует в списке! Обратитесь к администратору.")
+    else:
         bot.delete_message(message.chat.id, message_id=messagetoedit.message_id)
         keyboard = telebot.types.InlineKeyboardMarkup()
         for adress in values.get(name):
@@ -841,6 +842,7 @@ def ask_comment_6(message):
     )
     bot.register_next_step_handler(message, process_comment_6)
 
+
 # Функция для обработки комментария
 def process_comment_6(message):
     if message.text == "Пропустить":
@@ -850,7 +852,7 @@ def process_comment_6(message):
     elif message.text == "Назад":
         if "комментарий_6" in form_data:
             del form_data[message.chat.id]["комментарий_6"]
-        ask_basement_use(message)
+        ask_basement_use_2(message)
         return
     form_data[message.chat.id]["комментарий_6"] = message.text
     ask_plan_match(message)
@@ -893,6 +895,7 @@ def ask_comment_7(message):
     )
     bot.register_next_step_handler(message, process_comment_7)
 
+
 # Функция для обработки второго комментария
 def process_comment_7(message):
     if message.text == "Пропустить":
@@ -917,6 +920,7 @@ def ask_foundation(message):
     )
     bot.register_next_step_handler(message, process_foundation)
 
+
 # Функция для обработки ответа о фундаменте
 def process_foundation(message):
     if message.text == "Пропустить":
@@ -931,6 +935,7 @@ def process_foundation(message):
     form_data[message.chat.id]["фундамент"] = message.text
     ask_floors(message)
 
+
 # Функция для отправки вопроса о полах
 def ask_floors(message):
     bot.send_message(
@@ -939,6 +944,7 @@ def ask_floors(message):
         reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
     )
     bot.register_next_step_handler(message, process_floors)
+
 
 # Функция для обработки ответа о полах
 def process_floors(message):
@@ -953,6 +959,7 @@ def process_floors(message):
         return
     form_data[message.chat.id]["полы"] = message.text
     ask_load(message)
+
 
 # Функция для отправки вопроса о расчетной нагрузке
 def ask_load(message):
@@ -988,6 +995,7 @@ def ask_bearing_walls(message):
     )
     bot.register_next_step_handler(message, process_bearing_walls)
 
+
 # Функция для обработки ответа о несущих стенах
 def process_bearing_walls(message):
     if message.text == "Пропустить":
@@ -1002,6 +1010,7 @@ def process_bearing_walls(message):
     form_data[message.chat.id]["стены"] = message.text
     ask_ceiling_type(message)
 
+
 # Функция для отправки вопроса о типе перекрытия потолка
 def ask_ceiling_type(message):
     bot.send_message(
@@ -1010,6 +1019,7 @@ def ask_ceiling_type(message):
         reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
     )
     bot.register_next_step_handler(message, process_ceiling_type)
+
 
 # Функция для обработки ответа о типе перекрытия потолка
 def process_ceiling_type(message):
@@ -1025,6 +1035,7 @@ def process_ceiling_type(message):
     form_data[message.chat.id]["тип_потолка"] = message.text
     ask_ceiling_material(message)
 
+
 # Функция для отправки вопроса о материале перекрытия потолка
 def ask_ceiling_material(message):
     bot.send_message(
@@ -1033,6 +1044,7 @@ def ask_ceiling_material(message):
         reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
     )
     bot.register_next_step_handler(message, process_ceiling_material)
+
 
 # Функция для обработки ответа о материале перекрытия потолка
 def process_ceiling_material(message):
@@ -1048,6 +1060,7 @@ def process_ceiling_material(message):
     form_data[message.chat.id]["материал_потолка"] = message.text
     ask_floor_type(message)
 
+
 # Функция для отправки вопроса о типе перекрытия пола
 def ask_floor_type(message):
     bot.send_message(
@@ -1056,6 +1069,7 @@ def ask_floor_type(message):
         reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
     )
     bot.register_next_step_handler(message, process_floor_type)
+
 
 # Функция для обработки ответа о типе перекрытия пола
 def process_floor_type(message):
@@ -1071,6 +1085,7 @@ def process_floor_type(message):
     form_data[message.chat.id]["тип_пола"] = message.text
     ask_floor_material(message)
 
+
 # Функция для отправки вопроса о материале перекрытия пола
 def ask_floor_material(message):
     bot.send_message(
@@ -1079,6 +1094,7 @@ def ask_floor_material(message):
         reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
     )
     bot.register_next_step_handler(message, process_floor_material)
+
 
 # Функция для обработки ответа о материале перекрытия пола
 def process_floor_material(message):
@@ -1094,6 +1110,7 @@ def process_floor_material(message):
     form_data[message.chat.id]["материал_пола"] = message.text
     ask_roof_type(message)
 
+
 # Функция для отправки вопроса о типе кровли
 def ask_roof_type(message):
     bot.send_message(
@@ -1102,6 +1119,7 @@ def ask_roof_type(message):
         reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
     )
     bot.register_next_step_handler(message, process_roof_type)
+
 
 # Функция для обработки ответа о типе кровли
 def process_roof_type(message):
@@ -1152,6 +1170,7 @@ def ask_structure_scheme(message):
     )
     bot.register_next_step_handler(message, process_structure_scheme)
 
+
 # Функция для обработки ответа о конструктивной схеме здания
 def process_structure_scheme(message):
     if message.text == "Пропустить":
@@ -1166,6 +1185,7 @@ def process_structure_scheme(message):
     form_data[message.chat.id]["конструктивная_схема"] = message.text
     ask_defects(message)
 
+
 # Функция для отправки вопроса о дефектах несущих конструкций
 def ask_defects(message):
     bot.send_message(
@@ -1174,6 +1194,7 @@ def ask_defects(message):
         reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
     )
     bot.register_next_step_handler(message, process_defects)
+
 
 # Функция для обработки ответа о дефектах несущих конструкций
 def process_defects(message):
@@ -1189,6 +1210,7 @@ def process_defects(message):
     form_data[message.chat.id]["дефекты"] = message.text
     ask_opening_in_wall(message)
 
+
 # Функция для отправки вопроса о необходимости устройства проема в несущей стене
 def ask_opening_in_wall(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
@@ -1201,6 +1223,7 @@ def ask_opening_in_wall(message):
         reply_markup=markup,
     )
     bot.register_next_step_handler(message, process_opening_in_wall)
+
 
 # Функция для обработки ответа о необходимости устройства проема в несущей стене
 def process_opening_in_wall(message):
@@ -1216,6 +1239,7 @@ def process_opening_in_wall(message):
     form_data[message.chat.id]["проем"] = message.text
     ask_replacement_elements(message)
 
+
 # Функция для отправки вопроса о необходимости замены или установки элементов несущих конструкций
 def ask_replacement_elements(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
@@ -1228,6 +1252,7 @@ def ask_replacement_elements(message):
         reply_markup=markup,
     )
     bot.register_next_step_handler(message, process_replacement_elements)
+
 
 # Функция для обработки ответа о необходимости замены или установки элементов несущих конструкций
 def process_replacement_elements(message):
@@ -1243,6 +1268,7 @@ def process_replacement_elements(message):
     form_data[message.chat.id]["замена_элементов"] = message.text
     ask_reconstruction_area(message)
 
+
 # Функция для отправки вопроса о площади планируемой реконструкции
 def ask_reconstruction_area(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
@@ -1255,6 +1281,7 @@ def ask_reconstruction_area(message):
         reply_markup=markup,
     )
     bot.register_next_step_handler(message, process_reconstruction_area)
+
 
 # Функция для обработки ответа о площади планируемой реконструкции
 def process_reconstruction_area(message):
@@ -1269,6 +1296,7 @@ def process_reconstruction_area(message):
         return
     form_data[message.chat.id]["площадь_реконструкции"] = message.text
     ask_extension(message)
+
 
 # Функция для создания клавиатуры с вариантами Да, Нет, Пропустить, Назад
 def create_yes_no_skip_back_keyboard():
@@ -1287,6 +1315,7 @@ def ask_extension(message):
     )
     bot.register_next_step_handler(message, process_extension)
 
+
 # Функция для обработки ответа о строительстве теплого пристроя
 def process_extension(message):
     if message.text == "Пропустить":
@@ -1301,6 +1330,7 @@ def process_extension(message):
     form_data[message.chat.id]["пристройка"] = message.text
     ask_ceiling_height(message)
 
+
 # Функция для отправки вопроса о увеличении высоты потолков
 def ask_ceiling_height(message):
     bot.send_message(
@@ -1309,6 +1339,7 @@ def ask_ceiling_height(message):
         reply_markup=create_yes_no_skip_back_keyboard(),
     )
     bot.register_next_step_handler(message, process_ceiling_height)
+
 
 # Функция для обработки ответа о увеличении высоты потолков
 def process_ceiling_height(message):
@@ -1334,6 +1365,7 @@ def ask_roof_reconstruction(message):
     )
     bot.register_next_step_handler(message, process_roof_reconstruction)
 
+
 # Функция для обработки ответа о переустройстве кровли
 def process_roof_reconstruction(message):
     if message.text == "Пропустить":
@@ -1358,6 +1390,7 @@ def ask_construction_definition(message):
     )
     bot.register_next_step_handler(message, process_construction_definition)
 
+
 # Функция для обработки ответа о типе строительства
 def process_construction_definition(message):
     if message.text == "Пропустить":
@@ -1372,6 +1405,7 @@ def process_construction_definition(message):
     form_data[message.chat.id]["тип_строительства"] = message.text
     ask_expertise(message)
 
+
 # Функция для отправки вопроса о прохождении экспертизы проектной документации
 def ask_expertise(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
@@ -1384,6 +1418,7 @@ def ask_expertise(message):
         reply_markup=markup,
     )
     bot.register_next_step_handler(message, process_expertise)
+
 
 # Функция для обработки ответа о прохождении экспертизы проектной документации
 def process_expertise(message):
@@ -1399,6 +1434,7 @@ def process_expertise(message):
     form_data[message.chat.id]["экспертиза"] = message.text
     ask_requirements(message)
 
+
 # Функция для отправки вопроса о требованиях по отклонению и уточнению
 def ask_requirements(message):
     bot.send_message(
@@ -1407,6 +1443,7 @@ def ask_requirements(message):
         reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
     )
     bot.register_next_step_handler(message, process_requirements)
+
 
 # Функция для обработки ответа о требованиях
 def process_requirements(message):
@@ -1433,10 +1470,11 @@ def ask_possibly(message):
     markup.add(types.KeyboardButton("Пропустить"), types.KeyboardButton("Назад"))
     bot.send_message(
         message.chat.id,
-        "15. ВЫВОД: Использование помещений/здания в качестве магазина ТС «Монетка»:",
+        "16. ВЫВОД: Использование помещений/здания в качестве магазина ТС «Монетка»:",
         reply_markup=markup,
     )
     bot.register_next_step_handler(message, process_ask_possibly)
+
 
 # Функция для обработки ответа о требованиях
 def process_ask_possibly(message):
@@ -1520,6 +1558,7 @@ def ask_about_nonstandard_works(message):
     )
     bot.register_next_step_handler(message, process_ask_about_nonstandard_works)
 
+
 def process_ask_about_nonstandard_works(message):
     if message.text == "Пропустить":
         form_data[message.chat.id]["нетиповые_работы"] = "Пропущено"
@@ -1537,6 +1576,7 @@ def process_ask_about_nonstandard_works(message):
         ask_for_nonstandard_work_details(message)
         return
 
+
 def ask_for_nonstandard_work_details(message):
     if "нетиповые_работы" not in form_data[message.chat.id]:
         form_data[message.chat.id]["нетиповые_работы"] = []
@@ -1549,10 +1589,12 @@ def ask_for_work_name(message):
     )
     bot.register_next_step_handler(message, process_work_name)
 
+
 def process_work_name(message):
     work_name = message.text
     form_data[message.chat.id]["нетиповые_работы"].append({'тип_работ' : work_name})
     ask_for_work_deadline(message)
+
 
 def ask_for_work_deadline(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
@@ -1566,10 +1608,12 @@ def ask_for_work_deadline(message):
     )
     bot.register_next_step_handler(message, process_work_deadline)
 
+
 def process_work_deadline(message):
     deadline = message.text
     form_data[message.chat.id]["нетиповые_работы"][-1]["срок"] = deadline
     ask_for_work_responsible(message)
+
 
 def process_work_deadline(message):
     deadline = message.text
@@ -1579,6 +1623,7 @@ def process_work_deadline(message):
     form_data[message.chat.id]["нетиповые_работы"][-1]["срок"] = deadline
     ask_for_work_responsible(message)
 
+
 def ask_for_custom_deadline(message):
     bot.send_message(
         message.chat.id,
@@ -1586,10 +1631,12 @@ def ask_for_custom_deadline(message):
     )
     bot.register_next_step_handler(message, process_custom_deadline)
 
+
 def process_custom_deadline(message):
     custom_deadline = message.text
     form_data[message.chat.id]["нетиповые_работы"][-1]["срок"] = custom_deadline
     ask_for_work_responsible(message)
+
 
 def ask_for_work_responsible(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
@@ -1601,6 +1648,7 @@ def ask_for_work_responsible(message):
         reply_markup=markup,
     )
     bot.register_next_step_handler(message, process_work_responsible)
+
 
 def process_work_responsible(message):
     responsible = message.text
@@ -1617,6 +1665,7 @@ def ask_for_more_works(message):
         reply_markup=markup,
     )
     bot.register_next_step_handler(message, process_more_works)
+
 
 def process_more_works(message):
     if message.text == "Да":
@@ -1638,6 +1687,7 @@ def ask_for_requirements_(message):
     )
     bot.register_next_step_handler(message, process_requirements_)
 
+
 def process_requirements_(message):
     if message.text == "Пропустить":
         form_data[message.chat.id]["требования_стандарт"] = "Пропущено"
@@ -1651,6 +1701,7 @@ def process_requirements_(message):
     requirements = message.text
     form_data[message.chat.id]["требования_стандарт"] = requirements
     ask_for_construction_deadline(message)
+
 
 def ask_for_construction_deadline(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
@@ -1679,7 +1730,6 @@ def process_construction_deadline(message):
     end_form(message)
 
 
-
 # Функция для завершения формы
 def end_form(message):
     bot.send_message(message.chat.id, "Форма заполнена! Данные добавлены в АПО (при повторном заполнении АПО данные будут перезаписаны). Далее можно загрузить фото.")
@@ -1687,14 +1737,6 @@ def end_form(message):
 
     file_name = get_path_to_apo(message.chat.id)
     insert_data_to_excel(file_name, form_data[message.chat.id])
-
-    # filled = ''
-
-    # for key, value in form_data[message.chat.id].items():
-    #     filled += f"{key}: {value} \n"
-    # bot.send_message(message.chat.id, filled)
-    
-    # send_file_telegram(file_name, message.chat.id)
 
     bot.send_message(message.chat.id, "ВАЖНО! Объект будет находиться в списке объектов по которым требуется АПО до тех пор пока в таблице запуск не будет снята отметка")
     send_choice_message(message.chat.id)
@@ -1726,6 +1768,7 @@ def get_path_to_apo(chat_id):
         path_to_file = '//monetka.org/storage/Департамент строительства - Д/Развитие Запад/Объекты/' + adress + '/Акты/АПО/АПО ' + name_apo + '.xlsm'    
     return path_to_file
 
+
 def send_file_telegram(file_path, chat_id):
 
     # Проверка существования файла
@@ -1744,14 +1787,14 @@ def send_file_telegram(file_path, chat_id):
         return False
 
 
-bot.polling(none_stop=True)
+# bot.polling(none_stop=True)
 
-# while True:
-#     try:
-#         bot.polling(none_stop=True)
+while True:
+    try:
+        bot.polling(none_stop=True)
 
-#     except Exception as e:
-#         print(e)
-#         time.sleep(15)
+    except Exception as e:
+        print(e)
+        time.sleep(15)
 
 
