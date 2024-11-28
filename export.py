@@ -1,6 +1,8 @@
 
 import openpyxl
 from workers import ROR
+import pythoncom
+import win32com.client
 
 
 def insert_data_to_excel(file_name, data_dict):
@@ -16,6 +18,7 @@ def insert_data_to_excel(file_name, data_dict):
         cell_mapping = {}
 
         if sheet_name == '1':
+            worksheet["A11"] = data_dict.get('адрес')
             mark = ()
             cell_mapping = {
                 "председатель": "B15",
@@ -23,16 +26,17 @@ def insert_data_to_excel(file_name, data_dict):
                 "рп": "B22",
             }
         elif sheet_name == '2':
+            worksheet["B6"] = data_dict.get('адрес')
             if data_dict.get("филиал") == "МСК":
                 worksheet["C38"] = ROR[0]
             else:
                 worksheet["C38"] = ROR[1]
-            
+
             mark = (
                     'E15', 'E16', 'E17', 'E19', 'E20', 'E21', 'F23', 'H23', 'E20', 'F24','H24', 'F25', 'H25', 'F27', 'H27',
                     'F28', 'H28', 'E33', 'J33', 'E35', 'J35'
                     )
-            
+
             # Очищаем ранее заполненные данные
             for cell in mark:
                 worksheet[cell] = ''
@@ -173,7 +177,7 @@ def insert_data_to_excel(file_name, data_dict):
             else:
                 roof_reconstruction = "J42"
 
-            if data_dict.get("экспертиза") == "Да":
+            if data_dict.get("экспертиза") == "Требуется":
                 expertise = "E49"
             else:
                 expertise = "J49"
@@ -220,7 +224,6 @@ def insert_data_to_excel(file_name, data_dict):
 
             }
 
-
         elif sheet_name == '4 гор':
             worksheet['B34'] = data_dict.get('рп')
 
@@ -242,7 +245,7 @@ def insert_data_to_excel(file_name, data_dict):
             mark = (
                     'B6', 'B10',
                     )
-            
+ 
             # Очищаем ранее заполненные данные
             for cell in mark:
                 worksheet[cell] = ''
@@ -277,7 +280,6 @@ def insert_data_to_excel(file_name, data_dict):
                         else:
                             worksheet['E' + str(21 + i)] = "X"
                         worksheet['I' + str(21 + i)] = item.get("ответственный")
-    
 
         # Запись данных в ячейки
         for key, value in data_dict.items():
@@ -291,33 +293,20 @@ def insert_data_to_excel(file_name, data_dict):
                     else:
                         worksheet[cell] = value
 
-    workbook.save(file_name) # Сохранение изменений
+    workbook.save(file_name)  # Сохранение изменений
     print(f"Данные успешно вставлены в файл '{file_name}'.")
-
-import pythoncom
-import win32com.client
 
 
 def xlsm_to_pdf(xlsm_path):
-
-    # Получение названия файла без расширения
-    file_exel_name = xlsm_path.split('/')[-1]
-    filename = file_exel_name.split('.xlsm')[0]
-
     try:
         pythoncom.CoInitialize()
         Excel = win32com.client.Dispatch("Excel.Application")
         Excel.Visible = 0
-
-        
-        path_to_folder = os.path.abspath("..\\" + os.curdir)
-        wb = Excel.Workbooks.Open("C:/Users/user/Desktop/раб/Объекты/2 СПБ ЛО, г.п. Ульяновка Калинина, д. 1/Акты/АПО/АПО СПБ ЛО, г.п. Ульяновка Калинина, д. 1.xlsm")
-        wb.ExportAsFixedFormat(0, 'D:\\test.pdf')
+        wb = Excel.Workbooks.Open(xlsm_path)
+        file_pdf = xlsm_path.split(".xlsm")[0] + ".pdf"
+        wb.ExportAsFixedFormat(0, file_pdf.replace('/', '\\'))
         wb.Close()
     except Exception as e:
         print(e)
     finally:
         Excel.Quit()
-
-# Пример использования функции
-xlsm_to_pdf("../Объекты/2 СПБ ЛО, г.п. Ульяновка Калинина, д. 1/Акты/АПО/АПО СПБ ЛО, г.п. Ульяновка Калинина, д. 1.xlsm") 

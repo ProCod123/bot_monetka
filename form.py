@@ -6,28 +6,26 @@ import time
 
 from log_data import log_data_to_file
 from work_with_exel import get_task, get_name, file_zapusk, run_vba_macro
-from export import insert_data_to_excel
-from workers import DF, ROR, RP_MSK, RP_SPB
+from export import insert_data_to_excel, xlsm_to_pdf
+from workers import DF, ROR, RP_MSK, RP_SPB, ID
+from create import path_to_folder, create_rp_folder, create_task_folder
 
 
-# Вариант запуска local/network
-type_start = 'local'
-if type_start == 'local':
-    path_to_folder = os.path.abspath("..\\" + os.curdir)
-else:
-    path_to_folder = '\\monetka.org\storage\Департамент строительства - Д\Развитие Запад'    
-
-
-bot = telebot.TeleBot('5209749192:AAEyxtpL5ndVu8-cs77LgG_W878lqKGaT-I')
+bot = telebot.TeleBot('5820874061:AAGGpfqaRZkV7ZRHrezJEq41fdIeJ85KeUk')
 
 form_data = {}
-values = get_task(file_zapusk)
+
 
 
 @bot.message_handler(commands=['start'])
 def start(message):
 
     global values, keyboard
+
+    values = get_task(file_zapusk)
+
+    create_rp_folder(path_to_folder, ID)
+    create_task_folder(path_to_folder, values)
 
     # Отображаем значок загрузки
     bot.send_chat_action(message.chat.id, 'typing')
@@ -145,12 +143,17 @@ def handle_button_press(call):
         elif call.data == 'approve':
             # Вставляем подпись
             file_name = os.path.abspath(get_path_to_apo(call.message.chat.id)).replace("\\", "/")
-            print(file_name)
             run_vba_macro(file_name, 'module2', 'InsertImage')
 
             bot.send_message(call.message.chat.id, "Подпись добавлена!")
+            
+            # Конвертируем файл в ПДФ
+            xlsm_to_pdf(file_name)
+            # Находим путь к созданному ПДФ
+            file_pdf = file_name.split(".xlsm")[0] + ".pdf"
             # Отправляем файл
-            send_file_telegram(file_name, call.message.chat.id)
+            send_file_telegram(file_pdf, call.message.chat.id)
+
             bot.send_message(call.message.chat.id, "Требуется предоставить АПО по объектам:", reply_markup=keyboard)
 
         elif call.data == 'not_approve':
@@ -159,7 +162,7 @@ def handle_button_press(call):
             bot.send_message(call.message.chat.id, "Требуется предоставить АПО по объектам:", reply_markup=keyboard)
 
         if folder is not None:
-            form_data[user_id]['objects_path'] = path_to_folder + "\Объекты" + '\\' + form_data[user_id]['adr'] + "\\Акты\\АПО\\Фото\\" + folder
+            form_data[user_id]['objects_path'] = path_to_folder + form_data[user_id]['name'] + '\\' + form_data[user_id]['adr'] + "\\Фото\\" + folder
             bot.send_message(call.message.chat.id, 'Отправьте фото! Путь к папке: ' + form_data[user_id]['objects_path'])
     except Exception as e:
         print(e)
@@ -231,7 +234,7 @@ def ask_owner_information(message):
         "Контакты владельца:",
         reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
     )
-    bot.register_next_step_handler(message, process_owner_information)
+    bot.register_next_step_handler(message, ask_for_construction_deadline)
 
 # Контакты владельца
 def process_owner_information(message):
@@ -1409,8 +1412,8 @@ def process_construction_definition(message):
 # Функция для отправки вопроса о прохождении экспертизы проектной документации
 def ask_expertise(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-    markup.add(types.KeyboardButton("Да"))
-    markup.add(types.KeyboardButton("Нет"))
+    markup.add(types.KeyboardButton("Требуется"))
+    markup.add(types.KeyboardButton("Не требуется"))
     markup.add(types.KeyboardButton("Пропустить"), types.KeyboardButton("Назад"))
     bot.send_message(
         message.chat.id,
@@ -1736,6 +1739,7 @@ def end_form(message):
     log_data_to_file(form_data[message.chat.id])
 
     file_name = get_path_to_apo(message.chat.id)
+    print(file_name)
     insert_data_to_excel(file_name, form_data[message.chat.id])
 
     bot.send_message(message.chat.id, "ВАЖНО! Объект будет находиться в списке объектов по которым требуется АПО до тех пор пока в таблице запуск не будет снята отметка")
@@ -1762,10 +1766,7 @@ def send_choice_message(chat_id):
 def get_path_to_apo(chat_id):
     adress = values.get(form_data[chat_id]['name'])[form_data[chat_id]['number']]
     name_apo = ' '.join(adress.split(' ')[1:])
-    if type_start == 'local':    
-        path_to_file = '../Объекты/' + adress + '/Акты/АПО/АПО ' + name_apo + '.xlsm'
-    else:
-        path_to_file = '//monetka.org/storage/Департамент строительства - Д/Развитие Запад/Объекты/' + adress + '/Акты/АПО/АПО ' + name_apo + '.xlsm'    
+    path_to_file = '../АПО/' + form_data[chat_id]['name'] + '/' + adress + '/АПО ' + name_apo + '.xlsm'
     return path_to_file
 
 

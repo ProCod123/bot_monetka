@@ -1,0 +1,6 @@
+
+
+cd C:\Users\ashirma\Desktop\ZAPUSK
+
+
+& C:/Python312/python.exe c:/Users/ashirma/Desktop/ZAPUSK/bot/form.py
