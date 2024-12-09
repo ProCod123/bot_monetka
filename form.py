@@ -8,7 +8,7 @@ from log_data import log_data_to_file
 from work_with_exel import get_task, get_name, file_zapusk, run_vba_macro
 from export import insert_data_to_excel, xlsm_to_pdf
 from workers import DF, ROR, RP_MSK, RP_SPB, ID
-from create import path_to_folder, create_rp_folder, create_task_folder
+from create import path_to_folder, destination_folder, create_task_folder, start_update
 
 
 bot = telebot.TeleBot('5820874061:AAGGpfqaRZkV7ZRHrezJEq41fdIeJ85KeUk')
@@ -24,12 +24,13 @@ def start(message):
 
     values = get_task(file_zapusk)
 
-    create_rp_folder(path_to_folder, ID)
-    create_task_folder(path_to_folder, values)
-
     # Отображаем значок загрузки
     bot.send_chat_action(message.chat.id, 'typing')
     messagetoedit = bot.send_message(message.chat.id, 'Подождите...')
+
+    create_task_folder(path_to_folder, values)
+
+
 
     # Настраиваем минимальную периодичность обновлений 
     if form_data.get('время_обновления'):
@@ -143,6 +144,7 @@ def handle_button_press(call):
         elif call.data == 'approve':
             # Вставляем подпись
             file_name = os.path.abspath(get_path_to_apo(call.message.chat.id)).replace("\\", "/")
+            print(file_name)
             run_vba_macro(file_name, 'module2', 'InsertImage')
 
             bot.send_message(call.message.chat.id, "Подпись добавлена!")
@@ -162,7 +164,7 @@ def handle_button_press(call):
             bot.send_message(call.message.chat.id, "Требуется предоставить АПО по объектам:", reply_markup=keyboard)
 
         if folder is not None:
-            form_data[user_id]['objects_path'] = path_to_folder + form_data[user_id]['name'] + '\\' + form_data[user_id]['adr'] + "\\Фото\\" + folder
+            form_data[user_id]['objects_path'] = path_to_folder  + form_data[user_id]['adr'] + "\\Фото\\" + folder
             bot.send_message(call.message.chat.id, 'Отправьте фото! Путь к папке: ' + form_data[user_id]['objects_path'])
     except Exception as e:
         print(e)
@@ -1766,7 +1768,7 @@ def send_choice_message(chat_id):
 def get_path_to_apo(chat_id):
     adress = values.get(form_data[chat_id]['name'])[form_data[chat_id]['number']]
     name_apo = ' '.join(adress.split(' ')[1:])
-    path_to_file = '../АПО/' + form_data[chat_id]['name'] + '/' + adress + '/АПО ' + name_apo + '.xlsm'
+    path_to_file = '../АПО/' + '/' + adress + '/АПО ' + name_apo + '.xlsm'
     return path_to_file
 
 
@@ -1795,7 +1797,7 @@ while True:
         bot.polling(none_stop=True)
 
     except Exception as e:
+        if time.gmtime().tm_min in (0, 10, 20, 30, 40, 50) and time.gmtime().tm_sec < 31:
+            start_update(path_to_folder, destination_folder)
         print(e)
         time.sleep(15)
-
-

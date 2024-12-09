@@ -30,37 +30,37 @@ def get_last_modified_date(folder_path):
 
     return last_modified
 
-def process_folders(main_folder_path, output_json_path):
-    """
-    Обрабатывает подпапки, собирает данные и сохраняет их в JSON файл.
-    """
-    all_data = {}
-    for folder_name in os.listdir(main_folder_path):
-        employee_folder_path = os.path.join(main_folder_path, folder_name)
-        if os.path.isdir(employee_folder_path):
-            all_data[folder_name] = get_last_modified_date(employee_folder_path)
-    with open(output_json_path, 'w', encoding='utf-8') as json_file:
-        json.dump(all_data, json_file, indent=4, ensure_ascii=False)
+# def process_folders(main_folder_path, output_json_path):
+#     """
+#     Обрабатывает подпапки, собирает данные и сохраняет их в JSON файл.
+#     """
+#     all_data = {}
+#     for folder_name in os.listdir(main_folder_path):
+#         employee_folder_path = os.path.join(main_folder_path, folder_name)
+#         if os.path.isdir(employee_folder_path):
+#             all_data[folder_name] = get_last_modified_date(employee_folder_path)
+#     with open(output_json_path, 'w', encoding='utf-8') as json_file:
+#         json.dump(all_data, json_file, indent=4, ensure_ascii=False)
 
-def main(main_folder_path, output_json_path):
-    """Основная функция, запускающая обработку и планирование."""
-    process_folders(main_folder_path, output_json_path)
-    schedule.every().hour.do(lambda: process_folders(main_folder_path, output_json_path))
+# def main(main_folder_path, output_json_path):
+#     """Основная функция, запускающая обработку и планирование."""
+#     process_folders(main_folder_path, output_json_path)
+#     schedule.every().hour.do(lambda: process_folders(main_folder_path, output_json_path))
 
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
+#     while True:
+#         schedule.run_pending()
+#         time.sleep(1)
 
-if __name__ == "__main__":
-    main_folder_path = 'C:/Users/user/Desktop/раб/АПО'
-    output_json_path = 'C:/Users/user/Desktop/раб/bot/tt.json'
+# if __name__ == "__main__":
+#     main_folder_path = 'C:/Users/user/Desktop/раб/АПО'
+#     output_json_path = 'C:/Users/user/Desktop/раб/bot/tt.json'
 
-    # проверка существования папки
-    if not os.path.exists(main_folder_path):
-      print(f"Ошибка: папка {main_folder_path} не существует.")
-      exit()
+#     # проверка существования папки
+#     if not os.path.exists(main_folder_path):
+#       print(f"Ошибка: папка {main_folder_path} не существует.")
+#       exit()
 
     main(main_folder_path, output_json_path)
 
-# x = get_last_modified_date('C:/Users/user/Desktop/раб/АПО')
-# print(x)
+x = get_last_modified_date('C:/Users/user/Desktop/раб/АПО')
+print(x)
