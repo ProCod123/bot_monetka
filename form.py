@@ -236,7 +236,7 @@ def ask_owner_information(message):
         "Контакты владельца:",
         reply_markup=create_keyboard_with_skip_and_back("Пропустить", "Назад"),
     )
-    bot.register_next_step_handler(message, ask_for_construction_deadline)
+    bot.register_next_step_handler(message, process_owner_information)
 
 # Контакты владельца
 def process_owner_information(message):
