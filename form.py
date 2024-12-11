@@ -9,12 +9,11 @@ from work_with_exel import get_task, get_name, file_zapusk, run_vba_macro
 from export import insert_data_to_excel, xlsm_to_pdf
 from workers import DF, ROR, RP_MSK, RP_SPB, ID
 from create import path_to_folder, destination_folder, create_task_folder, start_update
-
+import base
 
 bot = telebot.TeleBot('5820874061:AAGGpfqaRZkV7ZRHrezJEq41fdIeJ85KeUk')
 
 form_data = {}
-
 
 
 @bot.message_handler(commands=['start'])
@@ -22,15 +21,12 @@ def start(message):
 
     global values, keyboard
 
-    values = get_task(file_zapusk)
-
     # Отображаем значок загрузки
     bot.send_chat_action(message.chat.id, 'typing')
     messagetoedit = bot.send_message(message.chat.id, 'Подождите...')
-
+    
+    values = get_task(file_zapusk)
     create_task_folder(path_to_folder, values)
-
-
 
     # Настраиваем минимальную периодичность обновлений 
     if form_data.get('время_обновления'):
@@ -72,6 +68,7 @@ def handle_button_press(call):
     try:
         if len(call.data.split(',')) > 1:
             form_data[user_id]['name'] = call.data.split(',')[0]
+            base.update_form_data(user_id, {'name' : call.data.split(',')[0]})
             form_data[user_id]['number'] = int(call.data.split(',')[1])
             form_data[user_id]['adr'] = values.get(form_data[user_id]['name'])[form_data[user_id]['number']]
             form_data[user_id]['филиал'] = form_data[user_id]['adr'].split(' ')[1]
@@ -193,7 +190,7 @@ def start_form(message):
     # form_data.clear()  # Очищаем данные формы перед началом
     # Добавляем филиал в словарь
     user_id = message.chat.id
-
+    # update_form_data(user_id, data)
     form_data[user_id]["адрес"] = ' '.join(form_data[user_id]["adr"].split(' ')[1:])
     # Находим полние имя РП
     for text in (RP_MSK + RP_SPB):
