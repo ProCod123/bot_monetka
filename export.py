@@ -3,15 +3,16 @@ import openpyxl
 from workers import ROR
 import pythoncom
 import win32com.client
+from base import get_form_data
 
 
-def insert_data_to_excel(file_name, data_dict):
+def insert_data_to_excel(file_name, data_dict, data_netipovye_raboty, user_id):
     try:
         workbook = openpyxl.load_workbook(file_name, keep_vba=True)
     except FileNotFoundError:
         workbook = openpyxl.Workbook()
 
-    for sheet_name in ('1', '2', '3', '4 гор', '5-8 гор', '9-10', '11'):
+    for sheet_name in ('1', '3', '4 гор', '5-8 гор', '9-10', '11'):
         worksheet = workbook[sheet_name] # Получение листа
 
         # Соответствие ключей словаря ячейкам
@@ -21,110 +22,15 @@ def insert_data_to_excel(file_name, data_dict):
             worksheet["A11"] = data_dict.get('адрес')
             mark = ()
             cell_mapping = {
-                "председатель": "B15",
-                "член_ком1": "B20",
-                "рп": "B22",
+                "РОР": "B16",
+                "рп": "B18",
+                "ИСК": "B20",
+
             }
-        elif sheet_name == '2':
-            worksheet["B6"] = data_dict.get('адрес')
-            if data_dict.get("филиал") == "МСК":
-                worksheet["C38"] = ROR[0]
-            else:
-                worksheet["C38"] = ROR[1]
-
-            mark = (
-                    'E15', 'E16', 'E17', 'E19', 'E20', 'E21', 'F23', 'H23', 'E20', 'F24','H24', 'F25', 'H25', 'F27', 'H27',
-                    'F28', 'H28', 'E33', 'J33', 'E35', 'J35'
-                    )
-
-            # Очищаем ранее заполненные данные
-            for cell in mark:
-                worksheet[cell] = ''
-
-            # 5. Право владения объектом, планируется  по Договору:
-            if data_dict.get("право_владения") == "Аренда":
-                pravo = "E15"
-            elif data_dict.get("право_владения") == "Аренды (будущей вещи)":
-                pravo = "E16"
-            else:
-                pravo = "E17"
-
-            # 6. Планируемый объект является:
-            if data_dict.get("собственность") == "Частная собственность":
-                own = "E19"
-            elif data_dict.get("собственность") == "Муниципальная собственность":
-                own = "E20"
-            else:
-                own = "E21"
-
-            # является памятником архитектуры
-            if data_dict.get("памятник") == "Да":
-                memorial = "F23"
-            else:
-                memorial = "H23"
-
-            # Введено в эксплуатацию
-            if data_dict.get("эксплуатация") == "Да":
-                exploitation = "F24"
-            else:
-                exploitation = "H24"
-
-            # признано ветхим/аварийным
-            if data_dict.get("ветхость") == "Да":
-                dilapidation = "F25"
-            else:
-                dilapidation = "H25"
-
-            # цоколь
-            if data_dict.get("цоколь") == "Да":
-                base = "F27"
-            else:
-                base = "H27"    
-
-            # один_собственник    
-            if data_dict.get("один_собственник") == "Да":
-                one_owner = "F28"
-            else:
-                one_owner = "H28"
-
-            # Договору аренды будут оформлены  
-            if data_dict.get("документы_подвала") == "Все помещения":
-                basment_doc = "E33"
-            else:
-                basment_doc = "J33"
-
-            # Основная ориентированность на   
-            if data_dict.get("трафик") == "Пешеходный трафик":
-                traffic = "E35"
-            else:
-                traffic = "J35"
-
-            cell_mapping = {
-                "адрес": "B6",
-                "владелец": "B7",
-                "контакты_владельца": "B8",
-                "пользователь": "B10",
-                "контакты_пользователя": "B11",
-                "функциональное_назначение": "C13",
-                "право_владения": pravo,
-                "комментарии_1": "B18",
-                "собственность": own,
-                "комментарии_2": "B22",
-                "памятник": memorial,
-                "эксплуатация": exploitation,
-                "ветхость": dilapidation,
-                "комментарии_3": "B26",
-                "цоколь": base,
-                "один_собственник": one_owner,
-                "комментарии_4": "B29",
-                "подвальные_помещения": "C30",
-                "документы_подвала": basment_doc,
-                "комментарии_5": "B34",
-                "трафик": traffic,
-            }
+        
 
         elif sheet_name == '3':
-            worksheet["C59"] = data_dict.get("рп")
+            worksheet["C30"] = data_dict.get("рп")
 
             # тип объекта:
             if data_dict.get("тип_объекта") == "Встроен./встроен.-пристроен.":
@@ -147,43 +53,8 @@ def insert_data_to_excel(file_name, data_dict):
             else:
                 compliance = "G15"
 
-            if data_dict.get("проем") == "Да":
-                door = "E32"
-            else:
-                door = "J32"
 
-            if data_dict.get("замена_элементов") == "Да":
-                change_element = "E33"
-            else:
-                change_element = "J33"
-
-            if data_dict.get("площадь_реконструкции") == "Да":
-                square = "E35"
-            else:
-                square = "J35"
-
-            if data_dict.get("пристройка") == "Да":
-                extension = "E39"
-            else:
-                extension = "J39"
-
-            if data_dict.get("потолки") == "Да":
-                ceilings = "E40"
-            else:
-                ceilings = "J40"
-
-            if data_dict.get("кровля_переустройство") == "Да":
-                roof_reconstruction = "E42"
-            else:
-                roof_reconstruction = "J42"
-
-            if data_dict.get("экспертиза") == "Требуется":
-                expertise = "E49"
-            else:
-                expertise = "J49"
-
-            mark = ("E7", "E8", "E9", "E10", "H12", "J12", "E15", "G15", "E32", "J32", "E33", 
-                    "J33", "E35", "J35", "E39", "J39", "E40", "J40", "E42", "J42", "E49", "J49")
+            mark = ("E7", "E8", "E9", "E10", "H12", "J12", "E15", "G15")
 
             # Очищаем ранее заполненные данные
             for cell in mark:
@@ -211,18 +82,7 @@ def insert_data_to_excel(file_name, data_dict):
                 "конструктивная_схема": "C27",
                 "дефекты": "C28",
 
-                "проем": door,
-                "замена_элементов": change_element,
-                "площадь_реконструкции": square,
-                "пристройка": extension,
-                "потолки": ceilings,
-                "кровля_переустройство": roof_reconstruction,
-
-                "тип_строительства": "D45",
-                "экспертиза": expertise,
-                "требования": "A52",
-
-            }
+                }
 
         elif sheet_name == '4 гор':
             worksheet['B34'] = data_dict.get('рп')
@@ -235,13 +95,12 @@ def insert_data_to_excel(file_name, data_dict):
         elif sheet_name == '9-10':
             worksheet['B22'] = data_dict.get('рп')
             worksheet['B24'] = data_dict.get('член_ком1')
-            worksheet['B108'] = data_dict.get('председатель')
-            worksheet['B58'] = data_dict.get('рп')
+            worksheet['B55'] = data_dict.get('рп')
 
         elif sheet_name == '11':
             worksheet['A12'] = data_dict.get('')
-            worksheet['B47'] = data_dict.get('рп')
-            worksheet['B44'] = data_dict.get('председатель')
+            worksheet['B43'] = data_dict.get('рп')
+            # worksheet['B44'] = data_dict.get('председатель')
             mark = (
                     'B6', 'B10',
                     )
@@ -267,19 +126,20 @@ def insert_data_to_excel(file_name, data_dict):
                 "требования" : "A37",
                 "срок_строительства" : "D41"
             }
+
+
             # Заполняем таблицу
-            if "нетиповые_работы" in data_dict:
-                if data_dict.get("нетиповые_работы") != "Пропущено":
-                    for i, item in enumerate(data_dict.get("нетиповые_работы")):
-                        worksheet['A' + str(21 + i)] = i + 1
-                        worksheet['B' + str(21 + i)] = item.get("тип_работ")
-                        if item.get("срок") == "до АПП":
-                            worksheet['C' + str(21 + i)] = "X"
-                        elif item.get("срок") == "до ВПК":
-                            worksheet['D' + str(21 + i)] = "X"
-                        else:
-                            worksheet['E' + str(21 + i)] = "X"
-                        worksheet['I' + str(21 + i)] = item.get("ответственный")
+            if get_form_data(user_id)["нетиповые_работы"] == 'Да':
+                for i, item in enumerate(data_netipovye_raboty.get("нетиповые_работы")):
+                    worksheet['A' + str(21 + i)] = i + 1
+                    worksheet['B' + str(21 + i)] = item.get("тип_работ")
+                    if item.get("срок") == "до АПП":
+                        worksheet['C' + str(21 + i)] = "X"
+                    elif item.get("срок") == "до ВПК":
+                        worksheet['D' + str(21 + i)] = "X"
+                    else:
+                        worksheet['E' + str(21 + i)] = "X"
+                    worksheet['I' + str(21 + i)] = item.get("ответственный")
 
         # Запись данных в ячейки
         for key, value in data_dict.items():
